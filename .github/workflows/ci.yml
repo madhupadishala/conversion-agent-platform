@@ -16,3 +16,5 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm test
+
+# CI verification branch: confirms install + build + tests execute on pull requests.

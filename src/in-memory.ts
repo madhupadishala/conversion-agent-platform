@@ -33,7 +33,9 @@ export class InMemorySlotProvider implements SlotProvider {
   constructor(public readonly slots: Slot[]) {}
 
   async listAvailable(tenantId: string): Promise<Slot[]> {
-    return this.slots.filter((slot) => slot.tenantId === tenantId && slot.available).map(structuredClone);
+    return this.slots
+      .filter((slot) => slot.tenantId === tenantId && slot.available)
+      .map((slot) => structuredClone(slot));
   }
 
   async get(tenantId: string, slotId: string): Promise<Slot | undefined> {
