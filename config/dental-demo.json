@@ -1,0 +1,112 @@
+{
+  "tenantId": "demo-dental-hospital",
+  "name": "Demo Dental Hospital",
+  "timezone": "Asia/Kolkata",
+  "contactWithinSeconds": 180,
+  "paymentRequired": true,
+  "bookingFeeMinor": 10000,
+  "currency": "INR",
+  "reminderOffsetsMinutes": [1440, 180, 30],
+  "escalationKeywords": [
+    "doctor",
+    "dentist",
+    "human",
+    "emergency",
+    "severe pain",
+    "bleeding",
+    "swelling",
+    "allergy",
+    "pregnant",
+    "medicine",
+    "diagnosis",
+    "prescription",
+    "refund",
+    "complaint"
+  ],
+  "approvedKnowledge": [
+    {
+      "id": "faq-001",
+      "question": "What services does the dental hospital offer?",
+      "answer": "The hospital offers general dental consultations and may provide preventive, restorative, orthodontic, cosmetic, root-canal, implant, gum-care and oral-surgery services depending on clinician assessment and availability. The AI front desk must not determine which treatment is clinically appropriate.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-002",
+      "question": "Can you tell me what treatment I need?",
+      "answer": "Treatment recommendations require evaluation by a qualified dentist. The AI front desk can help arrange a consultation but must not diagnose or recommend treatment.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-003",
+      "question": "What are the working hours?",
+      "answer": "The demo hospital accepts consultation bookings Monday to Saturday between 9:00 AM and 6:00 PM, subject to live calendar availability.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-004",
+      "question": "How long is a consultation slot?",
+      "answer": "The standard demo consultation slot is 30 minutes.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-005",
+      "question": "Is there a booking fee?",
+      "answer": "For the demo workflow, a refundable or adjustable policy must be confirmed by the hospital. The test booking fee configured in the system is INR 100 and is used only to validate the payment and appointment-confirmation workflow.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-006",
+      "question": "When is my appointment confirmed?",
+      "answer": "When payment is required, the slot is confirmed only after the payment provider reports successful payment. The customer then receives confirmation and reminders.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-007",
+      "question": "Can I book without paying online?",
+      "answer": "If the hospital allows an exception, the request must be handed to a staff member. The AI front desk cannot waive configured payment requirements on its own.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-008",
+      "question": "Can I reschedule or cancel?",
+      "answer": "Rescheduling and cancellation are allowed only according to the hospital's approved policy. Until that policy is configured, the AI front desk should transfer the request to staff.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-009",
+      "question": "Do you provide online consultations?",
+      "answer": "Online consultation availability depends on the clinician and hospital policy. The AI front desk should offer only appointment modes returned by the live scheduling system.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-010",
+      "question": "I have severe dental pain or swelling. What should I do?",
+      "answer": "The AI front desk must not assess urgency or provide medical advice. It should immediately hand the conversation to a human team member and advise the caller to seek appropriate urgent professional care if they believe the situation is an emergency.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-011",
+      "question": "Can you guarantee the result of a treatment?",
+      "answer": "No. The AI front desk must never promise or guarantee clinical outcomes. Treatment suitability, risks, benefits and expected results must be discussed with the dentist.",
+      "status": "APPROVED",
+      "version": 1
+    },
+    {
+      "id": "faq-012",
+      "question": "What information will you ask me for?",
+      "answer": "For appointment coordination, the front desk may collect the caller's name, contact number, service or consultation interest, preferred appointment time and other non-clinical booking information needed by the hospital.",
+      "status": "APPROVED",
+      "version": 1
+    }
+  ]
+}
