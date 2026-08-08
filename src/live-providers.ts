@@ -7,7 +7,8 @@ const basicAuth = (user: string, password: string) => `Basic ${Buffer.from(`${us
 export class TwilioVoiceProvider {
   constructor(
     private readonly accountSid: string,
-    private readonly authToken: string,
+    private readonly restUsername: string,
+    private readonly restPassword: string,
     private readonly fromNumber: string,
     private readonly publicBaseUrl: string,
   ) {}
@@ -25,7 +26,7 @@ export class TwilioVoiceProvider {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: basicAuth(this.accountSid, this.authToken),
+        Authorization: basicAuth(this.restUsername, this.restPassword),
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: form,
@@ -43,12 +44,17 @@ export class TwilioVoiceProvider {
 }
 
 export class TwilioSmsSender {
-  constructor(private readonly accountSid: string, private readonly authToken: string, private readonly fromNumber: string) {}
+  constructor(
+    private readonly accountSid: string,
+    private readonly restUsername: string,
+    private readonly restPassword: string,
+    private readonly fromNumber: string,
+  ) {}
 
   async send(to: string, body: string): Promise<void> {
     const url = `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(this.accountSid)}/Messages.json`;
     const form = new URLSearchParams({ To: to, From: this.fromNumber, Body: body });
-    const response = await fetch(url, { method: "POST", headers: { Authorization: basicAuth(this.accountSid, this.authToken), "Content-Type": "application/x-www-form-urlencoded" }, body: form });
+    const response = await fetch(url, { method: "POST", headers: { Authorization: basicAuth(this.restUsername, this.restPassword), "Content-Type": "application/x-www-form-urlencoded" }, body: form });
     if (!response.ok) throw new Error(`Twilio SMS failed: ${response.status} ${await response.text()}`);
   }
 }
