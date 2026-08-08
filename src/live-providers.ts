@@ -1,3 +1,4 @@
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import type { Appointment, Lead, Reminder, Slot } from "./domain.js";
 import type { PaymentProvider, ReminderScheduler, SlotProvider } from "./ports.js";
 
@@ -41,21 +42,25 @@ export class TwilioVoiceProvider {
   }
 }
 
+export class TwilioSmsSender {
+  constructor(private readonly accountSid: string, private readonly authToken: string, private readonly fromNumber: string) {}
+
+  async send(to: string, body: string): Promise<void> {
+    const url = `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(this.accountSid)}/Messages.json`;
+    const form = new URLSearchParams({ To: to, From: this.fromNumber, Body: body });
+    const response = await fetch(url, { method: "POST", headers: { Authorization: basicAuth(this.accountSid, this.authToken), "Content-Type": "application/x-www-form-urlencoded" }, body: form });
+    if (!response.ok) throw new Error(`Twilio SMS failed: ${response.status} ${await response.text()}`);
+  }
+}
+
 export class RazorpayPaymentProvider implements PaymentProvider {
-  constructor(
-    private readonly keyId: string,
-    private readonly keySecret: string,
-    private readonly callbackBaseUrl: string,
-  ) {}
+  constructor(private readonly keyId: string, private readonly keySecret: string, private readonly callbackBaseUrl: string) {}
 
   async createPayment(input: { tenantId: string; leadId: string; amountMinor: number; currency: string }): Promise<{ reference: string; paymentUrl: string }> {
     const referenceId = `${input.tenantId.slice(0, 10)}_${input.leadId.slice(-20)}`.slice(0, 40);
     const response = await fetch("https://api.razorpay.com/v1/payment_links", {
       method: "POST",
-      headers: {
-        Authorization: basicAuth(this.keyId, this.keySecret),
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: basicAuth(this.keyId, this.keySecret), "Content-Type": "application/json" },
       body: JSON.stringify({
         amount: input.amountMinor,
         currency: input.currency,
@@ -81,8 +86,10 @@ export class RazorpayPaymentProvider implements PaymentProvider {
     const signature = params.get("razorpay_signature") ?? "";
     if (!linkId || !referenceId || !status || !paymentId || !signature) return false;
     const payload = `${linkId}|${referenceId}|${status}|${paymentId}`;
-    const expected = crypto.createHmac("sha256", this.keySecret).update(payload).digest("hex");
-    return status === "paid" && crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+    const expected = createHmac("sha256", this.keySecret).update(payload).digest("hex");
+    const expectedBuffer = Buffer.from(expected);
+    const actualBuffer = Buffer.from(signature);
+    return status === "paid" && expectedBuffer.length === actualBuffer.length && timingSafeEqual(expectedBuffer, actualBuffer);
   }
 }
 
@@ -110,12 +117,7 @@ export class GoogleCalendarSlotProvider implements SlotProvider {
     const response = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
       method: "POST",
       headers: { Authorization: `Bearer ${this.options.accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        timeMin: now.toISOString(),
-        timeMax: horizon.toISOString(),
-        timeZone: this.options.timezone,
-        items: [{ id: this.options.calendarId }],
-      }),
+      body: JSON.stringify({ timeMin: now.toISOString(), timeMax: horizon.toISOString(), timeZone: this.options.timezone, items: [{ id: this.options.calendarId }] }),
     });
     if (!response.ok) throw new Error(`Google freeBusy failed: ${response.status} ${await response.text()}`);
     const body = await response.json() as { calendars?: Record<string, { busy?: Array<{ start: string; end: string }> }> };
@@ -134,7 +136,7 @@ export class GoogleCalendarSlotProvider implements SlotProvider {
     const slot = await this.get(tenantId, slotId);
     if (!slot) throw new Error("Calendar slot not found; refresh availability");
     if ([...this.held.values()].some((appointment) => appointment.slotId === slotId && appointment.status === "HELD")) throw new Error("Slot already held");
-    const appointment: Appointment = { id: `appt_${crypto.randomUUID()}`, tenantId, leadId, slotId, status: "HELD", createdAt: new Date().toISOString() };
+    const appointment: Appointment = { id: `appt_${randomUUID()}`, tenantId, leadId, slotId, status: "HELD", createdAt: new Date().toISOString() };
     this.held.set(appointment.id, appointment);
     return structuredClone(appointment);
   }
@@ -171,8 +173,7 @@ export class GoogleCalendarSlotProvider implements SlotProvider {
           const start = new Date(Date.UTC(year, month, date, hour, minute));
           const end = new Date(start.getTime() + duration);
           if (start <= now || end > horizon) continue;
-          const id = `gcal_${start.getTime()}`;
-          result.push({ id, tenantId: this.options.tenantId, providerId: this.options.calendarId, startsAt: start.toISOString(), endsAt: end.toISOString(), mode: "OFFLINE", available: true });
+          result.push({ id: `gcal_${start.getTime()}`, tenantId: this.options.tenantId, providerId: this.options.calendarId, startsAt: start.toISOString(), endsAt: end.toISOString(), mode: "OFFLINE", available: true });
         }
       }
     }
@@ -181,16 +182,13 @@ export class GoogleCalendarSlotProvider implements SlotProvider {
 }
 
 export class TwilioSmsReminderScheduler implements ReminderScheduler {
-  constructor(private readonly accountSid: string, private readonly authToken: string, private readonly fromNumber: string, private readonly leadLookup: (tenantId: string, leadId: string) => Promise<Lead | undefined>) {}
+  constructor(private readonly sender: TwilioSmsSender, private readonly leadLookup: (tenantId: string, leadId: string) => Promise<Lead | undefined>) {}
 
   async schedule(reminder: Reminder): Promise<void> {
     const delay = Math.max(0, new Date(reminder.sendAt).getTime() - Date.now());
     const timer = setTimeout(async () => {
       const lead = await this.leadLookup(reminder.tenantId, reminder.leadId);
-      if (!lead) return;
-      const url = `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(this.accountSid)}/Messages.json`;
-      const form = new URLSearchParams({ To: lead.phone, From: this.fromNumber, Body: "Reminder: your appointment is coming up. Reply to the business directly if you need to reschedule." });
-      await fetch(url, { method: "POST", headers: { Authorization: basicAuth(this.accountSid, this.authToken), "Content-Type": "application/x-www-form-urlencoded" }, body: form });
+      if (lead) await this.sender.send(lead.phone, "Reminder: your appointment is coming up. Reply to the business directly if you need to reschedule.");
     }, delay);
     timer.unref();
   }
