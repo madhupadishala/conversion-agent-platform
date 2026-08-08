@@ -36,6 +36,11 @@ export class InMemorySlotProvider implements SlotProvider {
     return this.slots.filter((slot) => slot.tenantId === tenantId && slot.available).map(structuredClone);
   }
 
+  async get(tenantId: string, slotId: string): Promise<Slot | undefined> {
+    const slot = this.slots.find((candidate) => candidate.tenantId === tenantId && candidate.id === slotId);
+    return slot ? structuredClone(slot) : undefined;
+  }
+
   async hold(tenantId: string, slotId: string, leadId: string): Promise<Appointment> {
     const slot = this.slots.find((candidate) => candidate.tenantId === tenantId && candidate.id === slotId && candidate.available);
     if (!slot) throw new Error("Slot unavailable");
