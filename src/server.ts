@@ -188,11 +188,13 @@ server.on("upgrade", (req, socket, head) => {
   wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
 });
 
-type RelayMessage =
-  | { type: "setup"; customParameters?: { tenantId?: string; leadId?: string } }
-  | { type: "prompt"; voicePrompt?: string; last?: boolean }
-  | { type: "error"; description?: string }
-  | { type: string };
+interface RelayMessage {
+  type: string;
+  customParameters?: { tenantId?: string; leadId?: string };
+  voicePrompt?: string;
+  last?: boolean;
+  description?: string;
+}
 
 wss.on("connection", (ws: WebSocket) => {
   let sessionTenantId = "";
