@@ -52,22 +52,23 @@ if (-not (Test-Path $cloudflared)) {
   Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile $cloudflared
 }
 
-$tunnelLog = Join-Path $env:TEMP 'conversion-agent-cloudflared.log'
-Remove-Item $tunnelLog -ErrorAction SilentlyContinue
+$tunnelOut = Join-Path $env:TEMP 'conversion-agent-cloudflared.out.log'
+$tunnelErr = Join-Path $env:TEMP 'conversion-agent-cloudflared.err.log'
+Remove-Item $tunnelOut,$tunnelErr -ErrorAction SilentlyContinue
 Write-Host 'Starting temporary public tunnel...' -ForegroundColor Yellow
-$tunnel = Start-Process -FilePath $cloudflared -ArgumentList @('tunnel','--url','http://localhost:3000','--no-autoupdate') -RedirectStandardError $tunnelLog -RedirectStandardOutput $tunnelLog -PassThru -WindowStyle Hidden
+$tunnel = Start-Process -FilePath $cloudflared -ArgumentList @('tunnel','--url','http://localhost:3000','--no-autoupdate') -RedirectStandardError $tunnelErr -RedirectStandardOutput $tunnelOut -PassThru -WindowStyle Hidden
 
 $publicUrl = $null
 for ($i = 0; $i -lt 60; $i++) {
   Start-Sleep -Seconds 1
-  if (Test-Path $tunnelLog) {
-    $text = Get-Content $tunnelLog -Raw
-    $match = [regex]::Match($text, 'https://[a-zA-Z0-9-]+\.trycloudflare\.com')
-    if ($match.Success) { $publicUrl = $match.Value; break }
-  }
-  if ($tunnel.HasExited) { throw "cloudflared exited early. Log: $(Get-Content $tunnelLog -Raw)" }
+  $text = ''
+  if (Test-Path $tunnelErr) { $text += (Get-Content $tunnelErr -Raw) }
+  if (Test-Path $tunnelOut) { $text += "`n" + (Get-Content $tunnelOut -Raw) }
+  $match = [regex]::Match($text, 'https://[a-zA-Z0-9-]+\.trycloudflare\.com')
+  if ($match.Success) { $publicUrl = $match.Value; break }
+  if ($tunnel.HasExited) { throw "cloudflared exited early. Log: $text" }
 }
-if (-not $publicUrl) { throw "Could not obtain Cloudflare tunnel URL. Log: $(Get-Content $tunnelLog -Raw)" }
+if (-not $publicUrl) { throw "Could not obtain Cloudflare tunnel URL. Error log: $(Get-Content $tunnelErr -Raw -ErrorAction SilentlyContinue)" }
 
 $env:PUBLIC_BASE_URL = $publicUrl
 Write-Host "Public URL: $publicUrl" -ForegroundColor Green
