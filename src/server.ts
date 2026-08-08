@@ -27,7 +27,10 @@ const optionalNumber = (name: string, fallback: number): number => {
 const publicBaseUrl = required("PUBLIC_BASE_URL").replace(/\/$/, "");
 const websocketBaseUrl = publicBaseUrl.replace(/^http:/, "ws:").replace(/^https:/, "wss:");
 const twilioAccountSid = required("TWILIO_ACCOUNT_SID");
-const twilioAuthToken = required("TWILIO_AUTH_TOKEN");
+const twilioApiKeySid = process.env.TWILIO_API_KEY_SID ?? twilioAccountSid;
+const twilioApiKeySecret = process.env.TWILIO_API_KEY_SECRET ?? process.env.TWILIO_AUTH_TOKEN;
+if (!twilioApiKeySecret) throw new Error("Missing TWILIO_API_KEY_SECRET or TWILIO_AUTH_TOKEN");
+const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN ?? "";
 const twilioFromNumber = required("TWILIO_FROM_NUMBER");
 const razorpayKeyId = required("RAZORPAY_KEY_ID");
 const razorpayKeySecret = required("RAZORPAY_KEY_SECRET");
@@ -39,6 +42,7 @@ const googleCalendarAccessToken = required("GOOGLE_CALENDAR_ACCESS_TOKEN");
 const adminKey = required("ADMIN_API_KEY");
 const staffNotifyPhone = process.env.STAFF_NOTIFY_PHONE;
 const validateTwilioSignature = (process.env.TWILIO_VALIDATE_SIGNATURE ?? "true").toLowerCase() !== "false";
+if (validateTwilioSignature && !twilioAuthToken) throw new Error("TWILIO_AUTH_TOKEN is required when TWILIO_VALIDATE_SIGNATURE=true");
 
 const store = new RuntimeStore();
 const initialConfig: ClientConfig = process.env.TENANT_CONFIG_JSON
@@ -68,10 +72,10 @@ const calendar = new GoogleCalendarSlotProvider({
   dayEndHour: optionalNumber("BUSINESS_DAY_END_HOUR", 18),
   horizonDays: optionalNumber("CALENDAR_HORIZON_DAYS", 7),
 });
-const sms = new TwilioSmsSender(twilioAccountSid, twilioAuthToken, twilioFromNumber);
+const sms = new TwilioSmsSender(twilioAccountSid, twilioApiKeySid, twilioApiKeySecret, twilioFromNumber);
 const reminders = new TwilioSmsReminderScheduler(sms, (t, l) => store.getLead(t, l));
 const razorpay = new RazorpayPaymentProvider(razorpayKeyId, razorpayKeySecret, publicBaseUrl);
-const twilio = new TwilioVoiceProvider(twilioAccountSid, twilioAuthToken, twilioFromNumber, publicBaseUrl);
+const twilio = new TwilioVoiceProvider(twilioAccountSid, twilioApiKeySid, twilioApiKeySecret, twilioFromNumber, publicBaseUrl);
 let idCounter = 0;
 const orchestrator = new ConversionOrchestrator(
   store.leadRepository(),
@@ -103,7 +107,7 @@ const server = createServer(async (req, res) => {
     const requestUrl = new URL(req.url ?? "/", publicBaseUrl);
 
     if (req.method === "GET" && requestUrl.pathname === "/health") {
-      return sendJson(res, 200, { ok: true, version: "0.3.0-validation", tenantId, telephony: "twilio", agent: "sarvam" });
+      return sendJson(res, 200, { ok: true, version: "0.3.1-validation", tenantId, telephony: "twilio", agent: "sarvam" });
     }
 
     if (req.method === "POST" && requestUrl.pathname === "/api/leads") {
