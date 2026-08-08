@@ -31,8 +31,8 @@ const twilioAuthToken = required("TWILIO_AUTH_TOKEN");
 const twilioFromNumber = required("TWILIO_FROM_NUMBER");
 const razorpayKeyId = required("RAZORPAY_KEY_ID");
 const razorpayKeySecret = required("RAZORPAY_KEY_SECRET");
-const openaiApiKey = required("OPENAI_API_KEY");
-const openaiModel = process.env.OPENAI_MODEL ?? "gpt-5";
+const sarvamApiKey = required("SARVAM_API_KEY");
+const sarvamModel = process.env.SARVAM_CHAT_MODEL ?? "sarvam-30b";
 const tenantId = required("TEST_TENANT_ID");
 const googleCalendarId = required("GOOGLE_CALENDAR_ID");
 const googleCalendarAccessToken = required("GOOGLE_CALENDAR_ACCESS_TOKEN");
@@ -45,14 +45,14 @@ const initialConfig: ClientConfig = process.env.TENANT_CONFIG_JSON
   ? JSON.parse(process.env.TENANT_CONFIG_JSON) as ClientConfig
   : {
       tenantId,
-      name: "Demo Business",
+      name: "Demo Dental Hospital",
       timezone: "Asia/Kolkata",
       contactWithinSeconds: 180,
       paymentRequired: true,
-      bookingFeeMinor: 100,
+      bookingFeeMinor: 10000,
       currency: "INR",
       reminderOffsetsMinutes: [1440, 180, 30],
-      escalationKeywords: ["doctor", "human", "complaint", "refund", "emergency", "diagnosis", "side effect"],
+      escalationKeywords: ["doctor", "dentist", "human", "complaint", "refund", "emergency", "diagnosis", "medicine", "prescription", "severe pain", "bleeding", "swelling"],
       approvedKnowledge: [],
     };
 if (initialConfig.tenantId !== tenantId) throw new Error("TENANT_CONFIG_JSON tenantId must match TEST_TENANT_ID");
@@ -83,7 +83,7 @@ const orchestrator = new ConversionOrchestrator(
   { next: (prefix) => `${prefix}_${++idCounter}_${randomUUID().slice(0, 8)}` },
   { now: () => new Date() },
 );
-const agent = new GovernedVoiceAgent(orchestrator, (t, l) => store.getLead(t, l), (t) => store.getConfig(t), openaiApiKey, openaiModel);
+const agent = new GovernedVoiceAgent(orchestrator, (t, l) => store.getLead(t, l), (t) => store.getConfig(t), sarvamApiKey, sarvamModel);
 
 const readBody = async (req: IncomingMessage): Promise<string> => {
   const chunks: Buffer[] = [];
@@ -103,7 +103,7 @@ const server = createServer(async (req, res) => {
     const requestUrl = new URL(req.url ?? "/", publicBaseUrl);
 
     if (req.method === "GET" && requestUrl.pathname === "/health") {
-      return sendJson(res, 200, { ok: true, version: "0.2.0", tenantId });
+      return sendJson(res, 200, { ok: true, version: "0.3.0-validation", tenantId, telephony: "twilio", agent: "sarvam" });
     }
 
     if (req.method === "POST" && requestUrl.pathname === "/api/leads") {
