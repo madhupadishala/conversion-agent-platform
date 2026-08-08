@@ -11,6 +11,7 @@ export interface ClientConfigRepository {
 
 export interface SlotProvider {
   listAvailable(tenantId: string, serviceInterest?: string): Promise<Slot[]>;
+  get(tenantId: string, slotId: string): Promise<Slot | undefined>;
   hold(tenantId: string, slotId: string, leadId: string): Promise<Appointment>;
   confirm(tenantId: string, appointmentId: string): Promise<Appointment>;
 }
