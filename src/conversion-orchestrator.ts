@@ -126,17 +126,18 @@ export class ConversionOrchestrator {
   async confirmAppointment(tenantId: string, leadId: string): Promise<Lead> {
     const lead = await this.requireLead(tenantId, leadId);
     const config = await this.requireConfig(tenantId);
-    const allowed = config.paymentRequired ? ["PAID"] : ["SLOT_HELD"];
+    const allowed: Lead["status"][] = config.paymentRequired ? ["PAID"] : ["SLOT_HELD"];
     this.assertStatus(lead, allowed);
     if (!lead.appointmentId || !lead.slotId) throw new Error("Appointment hold missing");
+
+    const slot = await this.slots.get(tenantId, lead.slotId);
+    if (!slot) throw new Error("Held slot not found");
 
     const appointment = await this.slots.confirm(tenantId, lead.appointmentId);
     const updated = await this.transition(lead, "CONFIRMED", "APPOINTMENT_CONFIRMED", {
       appointmentId: appointment.id,
     });
-
-    const slot = (await this.slots.listAvailable(tenantId, lead.serviceInterest)).find((candidate) => candidate.id === lead.slotId);
-    if (slot) await this.scheduleAppointmentReminders(config.reminderOffsetsMinutes, updated, slot.startsAt);
+    await this.scheduleAppointmentReminders(config.reminderOffsetsMinutes, updated, slot.startsAt);
     return updated;
   }
 
