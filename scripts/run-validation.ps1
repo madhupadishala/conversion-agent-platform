@@ -7,6 +7,13 @@ function Read-PlainSecret([string]$Prompt) {
   finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
 }
 
+function Get-FreeTcpPort {
+  $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+  $listener.Start()
+  try { return ([System.Net.IPEndPoint]$listener.LocalEndpoint).Port }
+  finally { $listener.Stop() }
+}
+
 Write-Host "=== Conversion Agent live voice validation ===" -ForegroundColor Cyan
 Write-Host "This uses Twilio trial + Sarvam. Secrets stay in this PowerShell process only." -ForegroundColor DarkGray
 
@@ -16,9 +23,12 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) { throw 'npm is requir
 $accountSid = Read-Host 'Twilio Account SID (AC...)'
 $apiKeySid = Read-Host 'Twilio API Key SID (SK...)'
 $apiKeySecret = Read-PlainSecret 'Twilio API Key secret'
-$fromNumber = Read-Host 'Twilio trial number in E.164 format (example +1737...)'
+$fromNumber = (Read-Host 'Twilio trial number in E.164 format (example +1737...)').Replace(' ','')
 $sarvamKey = Read-PlainSecret 'Sarvam API subscription key'
-$testPhone = Read-Host 'Verified recipient phone in E.164 format (example +91...)'
+$testPhone = (Read-Host 'Verified recipient phone in E.164 format (example +91...)').Replace(' ','')
+
+$port = Get-FreeTcpPort
+Write-Host "Using free local port: $port" -ForegroundColor DarkGray
 
 $env:TWILIO_ACCOUNT_SID = $accountSid
 $env:TWILIO_API_KEY_SID = $apiKeySid
@@ -29,7 +39,7 @@ $env:SARVAM_API_KEY = $sarvamKey
 $env:SARVAM_CHAT_MODEL = 'sarvam-30b'
 $env:TEST_TENANT_ID = 'demo-dental-hospital'
 $env:ADMIN_API_KEY = 'local_validation_only'
-$env:PORT = '3000'
+$env:PORT = "$port"
 $env:RAZORPAY_KEY_ID = 'rzp_test_placeholder'
 $env:RAZORPAY_KEY_SECRET = 'placeholder'
 $env:GOOGLE_CALENDAR_ACCESS_TOKEN = 'placeholder'
@@ -56,7 +66,7 @@ $tunnelOut = Join-Path $env:TEMP 'conversion-agent-cloudflared.out.log'
 $tunnelErr = Join-Path $env:TEMP 'conversion-agent-cloudflared.err.log'
 Remove-Item $tunnelOut,$tunnelErr -ErrorAction SilentlyContinue
 Write-Host 'Starting temporary public tunnel...' -ForegroundColor Yellow
-$tunnel = Start-Process -FilePath $cloudflared -ArgumentList @('tunnel','--url','http://localhost:3000','--no-autoupdate') -RedirectStandardError $tunnelErr -RedirectStandardOutput $tunnelOut -PassThru -WindowStyle Hidden
+$tunnel = Start-Process -FilePath $cloudflared -ArgumentList @('tunnel','--url',"http://localhost:$port",'--no-autoupdate') -RedirectStandardError $tunnelErr -RedirectStandardOutput $tunnelOut -PassThru -WindowStyle Hidden
 
 $publicUrl = $null
 for ($i = 0; $i -lt 60; $i++) {
