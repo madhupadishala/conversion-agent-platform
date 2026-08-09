@@ -89,26 +89,44 @@ $env:PUBLIC_BASE_URL = $publicUrl
 Remove-Item $serverOut,$serverErr -ErrorAction SilentlyContinue
 $server = Start-Process -FilePath 'node' -ArgumentList @('dist/src/inbound-validation-server.js') -WorkingDirectory (Join-Path $PSScriptRoot '..') -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr -PassThru -WindowStyle Hidden
 
-$publicHealthy = $false
+# Verify the restarted origin locally first. This is the authoritative app-health check.
+$restartHealthy = $false
 for ($i = 0; $i -lt 30; $i++) {
-  Start-Sleep -Seconds 1
+  Start-Sleep -Milliseconds 500
+  try {
+    $health = Invoke-RestMethod -Uri "http://127.0.0.1:$port/health" -Method Get -TimeoutSec 3
+    if ($health.ok) { $restartHealthy = $true; break }
+  } catch {}
+  if ($server.HasExited) { throw "Server exited after public URL restart. Error: $(Get-Content $serverErr -Raw)" }
+}
+if (-not $restartHealthy) { throw "Server was not healthy after public URL restart. Error: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue)" }
+Write-Host 'AI server is healthy after public URL restart.' -ForegroundColor Green
+
+# Quick tunnels can take time to propagate. Try public health for up to two minutes,
+# but do not kill a healthy origin/tunnel merely because this Windows machine cannot resolve it immediately.
+$publicHealthy = $false
+Write-Host 'Waiting for Cloudflare public hostname to propagate...' -ForegroundColor Yellow
+for ($i = 0; $i -lt 60; $i++) {
+  Start-Sleep -Seconds 2
   try {
     $health = Invoke-RestMethod -Uri "$publicUrl/health" -Method Get -TimeoutSec 5
     if ($health.ok) { $publicHealthy = $true; break }
   } catch {}
-  if ($server.HasExited) { throw "Server exited after public URL restart. Error: $(Get-Content $serverErr -Raw)" }
+  if ($server.HasExited) { throw "Server exited while waiting for public tunnel. Error: $(Get-Content $serverErr -Raw)" }
+  if ($tunnel.HasExited) { throw "Cloudflare tunnel exited while waiting for propagation. Log: $(Get-Content $tunnelErr -Raw -ErrorAction SilentlyContinue)" }
 }
-if (-not $publicHealthy) {
-  $tunnelLog = ''
-  if (Test-Path $tunnelErr) { $tunnelLog += (Get-Content $tunnelErr -Raw) }
-  throw "Public endpoint did not become healthy. Server error: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue) Tunnel log: $tunnelLog"
+if ($publicHealthy) {
+  Write-Host 'Public endpoint is healthy.' -ForegroundColor Green
+} else {
+  Write-Host 'Public health check is not reachable from this PC yet, but the local server and Cloudflare tunnel are still alive.' -ForegroundColor Yellow
+  Write-Host 'Keep this window open and wait about 20-30 seconds before clicking Start call in Twilio.' -ForegroundColor Yellow
 }
 
 $twimlUrl = "$publicUrl/voice/inbound"
 Write-Host "`nREADY FOR TWILIO SANDBOX TEST" -ForegroundColor Green
 Write-Host "Paste this exact value into Twilio > Custom > TwiML URL:" -ForegroundColor Cyan
 Write-Host $twimlUrl -ForegroundColor Yellow
-Write-Host "`nThen click Start call in Twilio. Keep this PowerShell window open during the call." -ForegroundColor Cyan
+Write-Host "`nThen wait 20-30 seconds and click Start call in Twilio. Keep this PowerShell window open during the call." -ForegroundColor Cyan
 Write-Host 'Expected greeting: Hi, welcome to the Demo Dental Hospital AI front desk. How can I help you today?' -ForegroundColor DarkGray
 Write-Host 'Test normal dental questions, interruptions, accent/topic changes, and a clinical question that should trigger human handoff.' -ForegroundColor Cyan
 Write-Host "`nPress ENTER only after you finish testing. This stops the local server and tunnel." -ForegroundColor Yellow
