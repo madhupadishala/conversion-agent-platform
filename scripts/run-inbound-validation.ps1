@@ -15,18 +15,13 @@ function Get-FreeTcpPort {
   return $port
 }
 
-Write-Host "=== Twilio inbound dental-agent validation ===" -ForegroundColor Cyan
-Write-Host "You will call the Twilio trial number from your verified mobile." -ForegroundColor DarkGray
+Write-Host "=== Twilio sandbox dental-agent validation ===" -ForegroundColor Cyan
+Write-Host "This launcher starts the AI server and prints the Custom TwiML URL to paste into Twilio." -ForegroundColor DarkGray
 
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'Node.js is required but node was not found in PATH.' }
 if (-not (Get-Command npm -ErrorAction SilentlyContinue)) { throw 'npm is required but npm was not found in PATH.' }
 
-$accountSid = (Read-Host 'Twilio Account SID (AC...)').Trim()
-$apiKeySid = (Read-Host 'Twilio API Key SID (SK...)').Trim()
-$apiKeySecret = Read-PlainSecret 'Twilio API Key secret'
-$fromNumber = ((Read-Host 'Twilio trial number (example +1737...)') -replace '\s','').Trim()
 $sarvamKey = Read-PlainSecret 'Sarvam API subscription key'
-
 $port = Get-FreeTcpPort
 Write-Host "Using free local port: $port" -ForegroundColor Green
 
@@ -48,8 +43,8 @@ if (-not (Test-Path $cloudflared)) {
   Invoke-WebRequest -Uri 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe' -OutFile $cloudflared
 }
 
-$tunnelOut = Join-Path $env:TEMP 'conversion-agent-inbound-cloudflared.out.log'
-$tunnelErr = Join-Path $env:TEMP 'conversion-agent-inbound-cloudflared.err.log'
+$tunnelOut = Join-Path $env:TEMP 'conversion-agent-sandbox-cloudflared.out.log'
+$tunnelErr = Join-Path $env:TEMP 'conversion-agent-sandbox-cloudflared.err.log'
 Remove-Item $tunnelOut,$tunnelErr -ErrorAction SilentlyContinue
 Write-Host 'Starting temporary public tunnel...' -ForegroundColor Yellow
 $tunnel = Start-Process -FilePath $cloudflared -ArgumentList @('tunnel','--url',"http://localhost:$port",'--no-autoupdate') -RedirectStandardError $tunnelErr -RedirectStandardOutput $tunnelOut -PassThru -WindowStyle Hidden
@@ -68,8 +63,8 @@ if (-not $publicUrl) { throw 'Could not obtain Cloudflare tunnel URL.' }
 $env:PUBLIC_BASE_URL = $publicUrl
 Write-Host "Public URL: $publicUrl" -ForegroundColor Green
 
-$serverOut = Join-Path $env:TEMP 'conversion-agent-inbound-server.out.log'
-$serverErr = Join-Path $env:TEMP 'conversion-agent-inbound-server.err.log'
+$serverOut = Join-Path $env:TEMP 'conversion-agent-sandbox-server.out.log'
+$serverErr = Join-Path $env:TEMP 'conversion-agent-sandbox-server.err.log'
 Remove-Item $serverOut,$serverErr -ErrorAction SilentlyContinue
 $server = Start-Process -FilePath 'node' -ArgumentList @('dist/src/inbound-validation-server.js') -WorkingDirectory (Join-Path $PSScriptRoot '..') -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr -PassThru -WindowStyle Hidden
 
@@ -84,29 +79,17 @@ for ($i = 0; $i -lt 30; $i++) {
 }
 if (-not $healthy) { throw "Server did not become healthy. Error: $(Get-Content $serverErr -Raw)" }
 
-$authBytes = [Text.Encoding]::ASCII.GetBytes("${apiKeySid}:${apiKeySecret}")
-$auth = [Convert]::ToBase64String($authBytes)
-$headers = @{ Authorization = "Basic $auth" }
-$listUri = "https://api.twilio.com/2010-04-01/Accounts/$accountSid/IncomingPhoneNumbers.json?PhoneNumber=$([uri]::EscapeDataString($fromNumber))"
-Write-Host 'Locating Twilio trial number...' -ForegroundColor Yellow
-$numbers = Invoke-RestMethod -Uri $listUri -Headers $headers -Method Get -TimeoutSec 30
-$number = $numbers.incoming_phone_numbers | Where-Object { ($_.phone_number -replace '\s','') -eq $fromNumber } | Select-Object -First 1
-if (-not $number) { throw "Could not find $fromNumber in this Twilio account." }
-
-$voiceUrl = "$publicUrl/voice/inbound"
-$updateUri = "https://api.twilio.com/2010-04-01/Accounts/$accountSid/IncomingPhoneNumbers/$($number.sid).json"
-$updateBody = "VoiceUrl=$([uri]::EscapeDataString($voiceUrl))&VoiceMethod=POST"
-Write-Host 'Routing Twilio trial number to the dental agent...' -ForegroundColor Yellow
-Invoke-RestMethod -Uri $updateUri -Headers ($headers + @{ 'Content-Type'='application/x-www-form-urlencoded' }) -Method Post -Body $updateBody -TimeoutSec 30 | Out-Null
-
-Write-Host "`nREADY FOR LIVE TEST" -ForegroundColor Green
-Write-Host "From your verified mobile, call: $fromNumber" -ForegroundColor Cyan
-Write-Host 'Twilio may play its trial-account announcement first. After that, the dental AI front desk should answer.' -ForegroundColor DarkGray
-Write-Host 'Test normal dental questions, interruptions, accent, topic changes, and a clinical question that should trigger human handoff.' -ForegroundColor Cyan
-Write-Host "`nPress ENTER only after you finish the call. This will stop the server and tunnel." -ForegroundColor Yellow
+$twimlUrl = "$publicUrl/voice/inbound"
+Write-Host "`nREADY FOR TWILIO SANDBOX TEST" -ForegroundColor Green
+Write-Host "Paste this exact value into Twilio > Custom > TwiML URL:" -ForegroundColor Cyan
+Write-Host $twimlUrl -ForegroundColor Yellow
+Write-Host "`nThen click Start call in Twilio. Keep this PowerShell window open during the call." -ForegroundColor Cyan
+Write-Host 'Expected greeting: Hi, welcome to the Demo Dental Hospital AI front desk. How can I help you today?' -ForegroundColor DarkGray
+Write-Host 'Test normal dental questions, interruptions, accent/topic changes, and a clinical question that should trigger human handoff.' -ForegroundColor Cyan
+Write-Host "`nPress ENTER only after you finish testing. This stops the local server and tunnel." -ForegroundColor Yellow
 [void](Read-Host)
 
 try { Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue } catch {}
 try { Stop-Process -Id $tunnel.Id -Force -ErrorAction SilentlyContinue } catch {}
 $env:SARVAM_API_KEY = $null
-Write-Host 'Inbound validation runtime stopped.' -ForegroundColor Green
+Write-Host 'Sandbox validation runtime stopped.' -ForegroundColor Green
