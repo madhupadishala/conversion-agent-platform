@@ -35,6 +35,27 @@ Write-Host 'Installing/building...' -ForegroundColor Yellow
 npm install
 npm run build
 
+$serverOut = Join-Path $env:TEMP 'conversion-agent-sandbox-server.out.log'
+$serverErr = Join-Path $env:TEMP 'conversion-agent-sandbox-server.err.log'
+Remove-Item $serverOut,$serverErr -ErrorAction SilentlyContinue
+
+# PUBLIC_BASE_URL is needed by the app at startup. Start with localhost, then restart once the public URL exists.
+$env:PUBLIC_BASE_URL = "http://127.0.0.1:$port"
+Write-Host 'Starting local AI server...' -ForegroundColor Yellow
+$server = Start-Process -FilePath 'node' -ArgumentList @('dist/src/inbound-validation-server.js') -WorkingDirectory (Join-Path $PSScriptRoot '..') -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr -PassThru -WindowStyle Hidden
+
+$localHealthy = $false
+for ($i = 0; $i -lt 30; $i++) {
+  Start-Sleep -Milliseconds 500
+  try {
+    $health = Invoke-RestMethod -Uri "http://127.0.0.1:$port/health" -Method Get -TimeoutSec 3
+    if ($health.ok) { $localHealthy = $true; break }
+  } catch {}
+  if ($server.HasExited) { throw "Server exited early. Error: $(Get-Content $serverErr -Raw)" }
+}
+if (-not $localHealthy) { throw "Local server did not become healthy. Error: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue)" }
+Write-Host 'Local server is healthy.' -ForegroundColor Green
+
 $tools = Join-Path $PSScriptRoot '..\.tools'
 New-Item -ItemType Directory -Force -Path $tools | Out-Null
 $cloudflared = Join-Path $tools 'cloudflared.exe'
@@ -47,7 +68,7 @@ $tunnelOut = Join-Path $env:TEMP 'conversion-agent-sandbox-cloudflared.out.log'
 $tunnelErr = Join-Path $env:TEMP 'conversion-agent-sandbox-cloudflared.err.log'
 Remove-Item $tunnelOut,$tunnelErr -ErrorAction SilentlyContinue
 Write-Host 'Starting temporary public tunnel...' -ForegroundColor Yellow
-$tunnel = Start-Process -FilePath $cloudflared -ArgumentList @('tunnel','--url',"http://localhost:$port",'--no-autoupdate') -RedirectStandardError $tunnelErr -RedirectStandardOutput $tunnelOut -PassThru -WindowStyle Hidden
+$tunnel = Start-Process -FilePath $cloudflared -ArgumentList @('tunnel','--url',"http://127.0.0.1:$port",'--no-autoupdate') -RedirectStandardError $tunnelErr -RedirectStandardOutput $tunnelOut -PassThru -WindowStyle Hidden
 
 $publicUrl = $null
 for ($i = 0; $i -lt 60; $i++) {
@@ -60,24 +81,28 @@ for ($i = 0; $i -lt 60; $i++) {
   if ($tunnel.HasExited) { throw "cloudflared exited early. Log: $text" }
 }
 if (-not $publicUrl) { throw 'Could not obtain Cloudflare tunnel URL.' }
-$env:PUBLIC_BASE_URL = $publicUrl
 Write-Host "Public URL: $publicUrl" -ForegroundColor Green
 
-$serverOut = Join-Path $env:TEMP 'conversion-agent-sandbox-server.out.log'
-$serverErr = Join-Path $env:TEMP 'conversion-agent-sandbox-server.err.log'
+# Restart server so TwiML/WebSocket URLs use the public hostname.
+try { Stop-Process -Id $server.Id -Force -ErrorAction SilentlyContinue } catch {}
+$env:PUBLIC_BASE_URL = $publicUrl
 Remove-Item $serverOut,$serverErr -ErrorAction SilentlyContinue
 $server = Start-Process -FilePath 'node' -ArgumentList @('dist/src/inbound-validation-server.js') -WorkingDirectory (Join-Path $PSScriptRoot '..') -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr -PassThru -WindowStyle Hidden
 
-$healthy = $false
+$publicHealthy = $false
 for ($i = 0; $i -lt 30; $i++) {
   Start-Sleep -Seconds 1
   try {
     $health = Invoke-RestMethod -Uri "$publicUrl/health" -Method Get -TimeoutSec 5
-    if ($health.ok) { $healthy = $true; break }
+    if ($health.ok) { $publicHealthy = $true; break }
   } catch {}
-  if ($server.HasExited) { throw "Server exited early. Error: $(Get-Content $serverErr -Raw)" }
+  if ($server.HasExited) { throw "Server exited after public URL restart. Error: $(Get-Content $serverErr -Raw)" }
 }
-if (-not $healthy) { throw "Server did not become healthy. Error: $(Get-Content $serverErr -Raw)" }
+if (-not $publicHealthy) {
+  $tunnelLog = ''
+  if (Test-Path $tunnelErr) { $tunnelLog += (Get-Content $tunnelErr -Raw) }
+  throw "Public endpoint did not become healthy. Server error: $(Get-Content $serverErr -Raw -ErrorAction SilentlyContinue) Tunnel log: $tunnelLog"
+}
 
 $twimlUrl = "$publicUrl/voice/inbound"
 Write-Host "`nREADY FOR TWILIO SANDBOX TEST" -ForegroundColor Green
