@@ -80,7 +80,7 @@ export class GovernedVoiceAgent {
       headers: { "api-subscription-key": this.apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: this.model,
-        reasoning_effort: "none",
+        reasoning_effort: null,
         temperature: 0.1,
         max_tokens: 350,
         messages: [
