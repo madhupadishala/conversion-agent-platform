@@ -24,7 +24,7 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) { throw 'npm is requir
 $sarvamKey = Read-PlainSecret 'Sarvam API subscription key'
 $port = Get-FreeTcpPort
 $env:SARVAM_API_KEY = $sarvamKey
-$env:SARVAM_CHAT_MODEL = 'sarvam-30b'
+$env:SARVAM_CHAT_MODEL = 'sarvam-105b'
 $env:TEST_TENANT_ID = 'demo-dental-hospital'
 $env:PORT = [string]$port
 $env:TENANT_CONFIG_JSON = Get-Content (Join-Path $PSScriptRoot '..\config\dental-demo.json') -Raw

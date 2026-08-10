@@ -33,7 +33,7 @@ const readBody = async (req: IncomingMessage): Promise<string> => {
 };
 
 const sarvamApiKey = required("SARVAM_API_KEY");
-const sarvamModel = process.env.SARVAM_CHAT_MODEL ?? "sarvam-30b";
+const sarvamModel = process.env.SARVAM_CHAT_MODEL ?? "sarvam-105b";
 const tenantId = process.env.TEST_TENANT_ID ?? "demo-dental-hospital";
 const port = Number(process.env.PORT ?? 3100);
 const config = JSON.parse(required("TENANT_CONFIG_JSON")) as ClientConfig;
@@ -115,7 +115,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/health") {
-      return sendJson(res, 200, { ok: true, mode: "web-conversion-demo", tenantId, agent: "sarvam" });
+      return sendJson(res, 200, { ok: true, mode: "web-conversion-demo", tenantId, agent: "sarvam", model: sarvamModel });
     }
 
     if (req.method === "POST" && url.pathname === "/api/web/session") {
