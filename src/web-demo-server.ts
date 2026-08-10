@@ -47,27 +47,30 @@ const demoSlots: Slot[] = [];
 const inventory = new Map<string, InventoryStatus>();
 const now = new Date();
 
-const isConvenienceWindow = (hour: number, minute: number) =>
-  hour < 10 || (hour === 12 && minute >= 30) || hour === 13 || hour >= 17;
+const isConvenienceWindow = (hour: number) =>
+  hour < 10 || (hour >= 12 && hour < 15) || hour >= 16;
 
-for (let day = 1; day <= 42; day++) {
+for (let day = 0; day <= 42; day++) {
   const date = new Date(now);
   date.setDate(date.getDate() + day);
   if (date.getDay() === 0) continue;
   let index = 0;
-  for (let hour = 9; hour < 20; hour++) {
+  for (let hour = 8; hour < 22; hour++) {
     for (const minute of [0, 30]) {
       const start = new Date(date);
       start.setHours(hour, minute, 0, 0);
+      if (start.getTime() <= Date.now() + 20 * 60_000) continue;
+
       const id = `slot-${day}-${hour}-${minute}`;
-      const protectedWindow = isConvenienceWindow(hour, minute);
+      const preferred = isConvenienceWindow(hour);
       const seed = (day * 17 + hour * 7 + minute + index * 3) % 100;
       let status: InventoryStatus;
-      if (hour === 14 && minute === 0) status = "BLOCKED";
-      else if (protectedWindow) status = seed < 88 ? "AVAILABLE" : "HELD";
-      else if (seed < 66) status = "AVAILABLE";
-      else if (seed < 84) status = "BOOKED";
+      if (hour === 15 && minute === 0) status = "BLOCKED";
+      else if (preferred) status = seed < 86 ? "AVAILABLE" : seed < 94 ? "HELD" : "BOOKED";
+      else if (seed < 62) status = "AVAILABLE";
+      else if (seed < 82) status = "BOOKED";
       else status = "HELD";
+
       const slot: Slot = {
         id,
         tenantId,
@@ -156,8 +159,7 @@ setInterval(() => {
     if (Array.from(slots.appointments.values()).some((appointment) => appointment.slotId === slot.id)) return false;
     const d = new Date(slot.startsAt);
     const hour = d.getHours();
-    const minute = d.getMinutes();
-    return d > new Date() && !isConvenienceWindow(hour, minute) && !(hour === 14 && minute === 0);
+    return d > new Date() && !isConvenienceWindow(hour) && !(hour === 15 && d.getMinutes() === 0);
   });
   if (!candidates.length) return;
   const slot = candidates[activityTick % candidates.length];
@@ -185,7 +187,7 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/health") {
-      return sendJson(res, 200, { ok: true, mode: "live-inventory-calendar-demo", tenantId, agent: "sarvam", model: sarvamModel });
+      return sendJson(res, 200, { ok: true, mode: "guided-slot-booking-demo", tenantId, agent: "sarvam", model: sarvamModel });
     }
 
     if (req.method === "GET" && url.pathname === "/api/web/calendar") {
@@ -202,8 +204,6 @@ const server = createServer(async (req, res) => {
       const available = items.filter((item) => item.status === "AVAILABLE").length;
       return sendJson(res, 200, {
         demoMode: true,
-        demoLabel: "Demo live activity",
-        activeBookingCount: 4 + (activityTick % 9),
         refreshedAt: new Date().toISOString(),
         totals: { slots: items.length, available, unavailable: items.length - available },
         slots: items,
@@ -243,7 +243,7 @@ const server = createServer(async (req, res) => {
       });
       return sendJson(res, 201, {
         leadId: lead.id,
-        message: `Thanks ${firstName}. Choose a convenient appointment slot.`,
+        message: `Thanks ${firstName}. Let’s find a convenient appointment.`,
         lead: await publicLead(lead.id),
       });
     }
@@ -259,7 +259,7 @@ const server = createServer(async (req, res) => {
       if (!selected) return sendJson(res, 404, { error: "slot not found" });
       if (effectiveStatus(selected) !== "AVAILABLE") {
         return sendJson(res, 409, {
-          error: "That slot is currently unavailable.",
+          error: "That time was just taken.",
           recovery: {
             waitlistAvailable: true,
             alternatives: nearestAvailable(selected),
