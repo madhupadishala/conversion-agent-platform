@@ -92,7 +92,6 @@ const publicLead = async (leadId: string) => {
   return {
     id: lead.id,
     name: lead.name,
-    phone: lead.phone,
     serviceInterest: lead.serviceInterest,
     status: lead.status,
     paymentStatus: lead.paymentStatus,
@@ -103,6 +102,13 @@ const publicLead = async (leadId: string) => {
     qualification: lead.qualification,
   };
 };
+
+const publicSlots = (items: Slot[]) => items.slice(0, 6).map((slot) => ({
+  id: slot.id,
+  startsAt: slot.startsAt,
+  endsAt: slot.endsAt,
+  mode: slot.mode,
+}));
 
 const server = createServer(async (req, res) => {
   try {
@@ -115,27 +121,68 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/health") {
-      return sendJson(res, 200, { ok: true, mode: "web-conversion-demo", tenantId, agent: "sarvam", model: sarvamModel });
+      return sendJson(res, 200, { ok: true, mode: "instant-booking-demo", tenantId, agent: "sarvam", model: sarvamModel });
     }
 
     if (req.method === "POST" && url.pathname === "/api/web/session") {
-      const body = JSON.parse(await readBody(req)) as { name?: string; phone?: string; serviceInterest?: string };
-      const name = body.name?.trim();
-      const phone = body.phone?.trim();
-      if (!name || !phone) return sendJson(res, 400, { error: "name and phone are required" });
+      const body = JSON.parse(await readBody(req)) as {
+        firstName?: string;
+        lastName?: string;
+        age?: string | number;
+        gender?: string;
+      };
+      const firstName = body.firstName?.trim();
+      const lastName = body.lastName?.trim();
+      const gender = body.gender?.trim();
+      const age = Number(body.age);
+      if (!firstName || !lastName || !gender || !Number.isFinite(age) || age <= 0 || age > 120) {
+        return sendJson(res, 400, { error: "first name, last name, valid age and gender are required" });
+      }
+
       const lead = await orchestrator.ingestLead({
         tenantId,
-        name,
-        phone,
-        source: "web-demo",
-        serviceInterest: body.serviceInterest?.trim() || "dental consultation",
+        name: `${firstName} ${lastName}`,
+        phone: "captured-by-channel",
+        source: "web-booking",
+        serviceInterest: "dental consultation",
       });
       await orchestrator.markContactEligible(tenantId, lead.id);
       await orchestrator.startContact(tenantId, lead.id);
+      await orchestrator.recordQualification(tenantId, lead.id, {
+        firstName,
+        lastName,
+        age: String(age),
+        gender,
+        intent: "appointment-booking",
+      });
+      const available = await orchestrator.availableSlots(tenantId, lead.id);
       return sendJson(res, 201, {
         leadId: lead.id,
-        greeting: `Hi ${name}, welcome to ${config.name}. I can answer approved questions and help you book a consultation. How can I help?`,
+        message: `Thanks ${firstName}. Choose a convenient appointment slot.`,
+        slots: publicSlots(available),
         lead: await publicLead(lead.id),
+      });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/web/slot") {
+      const body = JSON.parse(await readBody(req)) as { leadId?: string; slotId?: string };
+      const leadId = body.leadId?.trim();
+      const slotId = body.slotId?.trim();
+      if (!leadId || !slotId) return sendJson(res, 400, { error: "leadId and slotId are required" });
+      const lead = await leads.get(tenantId, leadId);
+      if (!lead) return sendJson(res, 404, { error: "session not found" });
+
+      await orchestrator.selectSlot(tenantId, leadId, slotId);
+      const payment = await orchestrator.requestPayment(tenantId, leadId);
+      const selected = await slots.get(tenantId, slotId);
+      return sendJson(res, 200, {
+        message: "Slot held. Complete the booking payment to confirm your appointment.",
+        selectedSlot: selected ? publicSlots([selected])[0] : undefined,
+        paymentReady: Boolean(payment.paymentUrl),
+        paymentReference: payment.lead.paymentReference,
+        bookingFeeMinor: config.bookingFeeMinor,
+        currency: config.currency,
+        lead: await publicLead(leadId),
       });
     }
 
@@ -147,15 +194,10 @@ const server = createServer(async (req, res) => {
       if (!(await leads.get(tenantId, leadId))) return sendJson(res, 404, { error: "session not found" });
 
       const result = await agent.handleTurn(tenantId, leadId, message);
-      const lead = await publicLead(leadId);
       return sendJson(res, 200, {
         message: result.spokenText,
         handoff: Boolean(result.handoff),
-        paymentReady: Boolean(result.paymentUrl && lead?.paymentReference),
-        paymentReference: lead?.paymentReference,
-        bookingFeeMinor: config.bookingFeeMinor,
-        currency: config.currency,
-        lead,
+        lead: await publicLead(leadId),
       });
     }
 
@@ -168,7 +210,7 @@ const server = createServer(async (req, res) => {
       const confirmed = await orchestrator.confirmAppointment(tenantId, leadId);
       return sendJson(res, 200, {
         ok: true,
-        message: "Demo payment accepted. Your appointment is confirmed.",
+        message: "Payment received. Your appointment is confirmed.",
         lead: await publicLead(leadId),
         appointmentId: confirmed.appointmentId,
         reminders: reminders.reminders.filter((item) => item.leadId === leadId),
