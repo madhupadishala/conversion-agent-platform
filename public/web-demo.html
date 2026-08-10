@@ -8,68 +8,111 @@
     :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:#172033; background:#f5f7fb; }
     * { box-sizing:border-box; }
     body { margin:0; min-height:100vh; background:linear-gradient(180deg,#f7f9fc,#eef3f8); }
-    .shell { max-width:900px; margin:0 auto; padding:28px 18px 60px; }
-    .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; gap:12px; }
-    .brand strong { display:block; font-size:19px; }
-    .brand span { color:#6b7280; font-size:13px; }
-    .pill { background:#fff; border:1px solid #dfe5ed; border-radius:999px; padding:8px 11px; font-size:12px; color:#4b5563; }
-    .card { background:#fff; border:1px solid #e2e8f0; border-radius:22px; box-shadow:0 18px 50px rgba(15,23,42,.08); overflow:hidden; }
-    .hero { padding:28px 28px 18px; border-bottom:1px solid #edf1f5; }
-    .hero h1 { margin:0 0 8px; font-size:30px; letter-spacing:-.02em; }
-    .hero p { margin:0; color:#667085; line-height:1.55; }
-    .content { padding:26px; }
-    .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .shell { max-width:1080px; margin:0 auto; padding:24px 16px 60px; }
+    .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; }
+    .brand strong { display:block; font-size:18px; }
+    .brand span { color:#6b7280; font-size:12px; }
+    .pill { background:#fff; border:1px solid #dfe5ed; border-radius:999px; padding:7px 10px; font-size:12px; color:#4b5563; }
+    .card { background:#fff; border:1px solid #e2e8f0; border-radius:20px; box-shadow:0 14px 42px rgba(15,23,42,.07); overflow:hidden; }
+    .hero { padding:24px 26px 16px; border-bottom:1px solid #edf1f5; }
+    .hero h1 { margin:0 0 7px; font-size:28px; letter-spacing:-.02em; }
+    .hero p { margin:0; color:#667085; line-height:1.5; }
+    .content { padding:22px 26px 26px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     .field label { display:block; font-size:12px; font-weight:800; margin-bottom:6px; color:#344054; }
     input, select, button { font:inherit; }
-    input, select { width:100%; border:1px solid #d7dee8; border-radius:12px; padding:12px 13px; background:#fff; }
+    input, select { width:100%; border:1px solid #d7dee8; border-radius:11px; padding:11px 12px; background:#fff; }
     input:focus, select:focus { outline:none; border-color:#94a3b8; box-shadow:0 0 0 3px #eef2f7; }
     .full { grid-column:1/-1; }
-    .btn { border:0; border-radius:13px; padding:13px 16px; cursor:pointer; font-weight:800; }
+    .btn { border:0; border-radius:11px; padding:11px 14px; cursor:pointer; font-weight:800; }
     .btn-primary { background:#172033; color:#fff; width:100%; }
     .btn-pay { background:#0f766e; color:#fff; width:100%; margin-top:12px; }
+    .btn-ghost { background:#fff; border:1px solid #dbe3ec; color:#344054; }
     .btn:disabled { opacity:.55; cursor:wait; }
-    .steps { display:flex; gap:8px; margin:18px 0 0; flex-wrap:wrap; }
-    .step { font-size:12px; padding:7px 10px; border-radius:999px; background:#f1f5f9; color:#64748b; font-weight:700; }
+    .steps { display:flex; gap:7px; margin:16px 0 0; flex-wrap:wrap; }
+    .step { font-size:12px; padding:6px 9px; border-radius:999px; background:#f1f5f9; color:#64748b; font-weight:700; }
     .step.active { background:#172033; color:#fff; }
     .step.done { background:#dcfce7; color:#166534; }
     .hidden { display:none !important; }
-    .section-title { margin:0 0 6px; font-size:20px; }
-    .section-sub { margin:0 0 18px; color:#667085; font-size:14px; }
-    .slots { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-    .slot { border:1px solid #dce3eb; background:#fff; border-radius:14px; padding:13px; cursor:pointer; text-align:left; }
-    .slot:hover { border-color:#94a3b8; background:#f8fafc; }
-    .slot strong { display:block; font-size:14px; }
-    .slot span { display:block; color:#667085; font-size:12px; margin-top:4px; }
-    .summary { border:1px solid #dfe7ee; border-radius:16px; padding:16px; background:#f8fafc; }
-    .row { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #e7edf3; font-size:14px; }
+    .section-title { margin:0 0 5px; font-size:20px; }
+    .section-sub { margin:0 0 14px; color:#667085; font-size:13px; }
+    .calendar-top { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+    .view-switch { display:flex; gap:5px; padding:4px; background:#f3f6f9; border-radius:10px; }
+    .view-btn { border:0; background:transparent; color:#64748b; padding:7px 10px; border-radius:8px; cursor:pointer; font-weight:800; font-size:12px; }
+    .view-btn.active { background:#fff; color:#172033; box-shadow:0 1px 4px rgba(15,23,42,.08); }
+    .calendar-nav { display:flex; align-items:center; gap:7px; }
+    .nav-btn { width:34px; height:34px; border:1px solid #dbe3ec; background:#fff; border-radius:9px; cursor:pointer; font-weight:900; }
+    .period-label { min-width:150px; text-align:center; font-weight:800; font-size:13px; }
+    .live-strip { display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid #dbe6df; background:#f8fcf9; border-radius:11px; margin-bottom:12px; font-size:12px; color:#475467; }
+    .live-dot { width:8px; height:8px; border-radius:50%; background:#16a34a; animation:pulse 1.4s infinite; }
+    @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+    .legend { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:11px; font-size:11px; color:#667085; }
+    .legend span { display:flex; gap:5px; align-items:center; }
+    .legend i { width:9px; height:9px; border-radius:3px; display:block; }
+    .available-dot { background:#dcfce7; border:1px solid #86efac; }
+    .held-dot { background:#fef3c7; border:1px solid #facc15; }
+    .booked-dot { background:#eef2f6; border:1px solid #cbd5e1; }
+    .blocked-dot { background:#f8fafc; border:1px dashed #cbd5e1; }
+    .week-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:7px; }
+    .day-col { border:1px solid #e3e8ef; border-radius:12px; overflow:hidden; background:#fff; min-width:0; }
+    .day-head { padding:8px 7px; background:#f8fafc; border-bottom:1px solid #edf1f5; text-align:center; }
+    .day-head strong { display:block; font-size:12px; }
+    .day-head span { font-size:10px; color:#667085; }
+    .times { padding:6px; display:grid; gap:4px; }
+    .time-slot { border:1px solid transparent; border-radius:8px; padding:6px 4px; min-height:31px; font-size:11px; font-weight:800; cursor:pointer; text-align:center; transition:.15s ease; }
+    .time-slot.available { background:#ecfdf3; color:#166534; border-color:#bbf7d0; }
+    .time-slot.available:hover { background:#dcfce7; transform:translateY(-1px); }
+    .time-slot.held { background:#fffbeb; color:#92400e; border-color:#fde68a; }
+    .time-slot.booked { background:#f1f5f9; color:#94a3b8; text-decoration:line-through; }
+    .time-slot.blocked { background:#fff; color:#cbd5e1; border-style:dashed; border-color:#e2e8f0; }
+    .time-slot.selected { outline:2px solid #172033; outline-offset:1px; }
+    .day-list { display:grid; grid-template-columns:repeat(6,1fr); gap:7px; }
+    .day-list .time-slot { padding:9px 5px; }
+    .month-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+    .month-weekday { text-align:center; font-size:10px; font-weight:800; color:#667085; padding:4px; }
+    .month-day { min-height:78px; border:1px solid #e3e8ef; border-radius:10px; padding:7px; background:#fff; cursor:pointer; }
+    .month-day:hover { border-color:#94a3b8; }
+    .month-day.empty { background:transparent; border-color:transparent; cursor:default; }
+    .month-num { font-size:12px; font-weight:900; }
+    .month-meta { margin-top:7px; font-size:10px; color:#667085; }
+    .availability-bar { height:5px; background:#eef2f6; border-radius:99px; overflow:hidden; margin-top:5px; }
+    .availability-bar span { display:block; height:100%; background:#22c55e; }
+    .recovery { margin-top:12px; padding:12px; border:1px solid #e7dfc1; background:#fffdf5; border-radius:12px; }
+    .recovery strong { display:block; margin-bottom:5px; font-size:13px; }
+    .recovery p { margin:0 0 9px; font-size:12px; color:#667085; }
+    .recovery-options { display:flex; gap:6px; flex-wrap:wrap; }
+    .recovery-option { border:1px solid #dbe3ec; background:#fff; border-radius:9px; padding:7px 9px; cursor:pointer; font-size:11px; font-weight:800; }
+    .summary { border:1px solid #dfe7ee; border-radius:14px; padding:14px; background:#f8fafc; }
+    .row { display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-bottom:1px solid #e7edf3; font-size:13px; }
     .row:last-child { border-bottom:0; }
     .row span { color:#667085; }
-    .success { text-align:center; padding:34px 20px; }
-    .success-mark { width:56px; height:56px; border-radius:50%; display:grid; place-items:center; margin:0 auto 14px; background:#dcfce7; color:#166534; font-size:26px; font-weight:900; }
-    .help { margin-top:18px; border-top:1px solid #edf1f5; padding-top:18px; }
-    .help details { border:1px solid #e0e7ef; border-radius:14px; padding:12px 14px; background:#fbfcfe; }
-    .help summary { cursor:pointer; font-weight:800; font-size:13px; }
-    .help-box { margin-top:12px; display:flex; gap:8px; }
+    .success { text-align:center; padding:30px 20px; }
+    .success-mark { width:54px; height:54px; border-radius:50%; display:grid; place-items:center; margin:0 auto 13px; background:#dcfce7; color:#166534; font-size:25px; font-weight:900; }
+    .help { margin-top:16px; border-top:1px solid #edf1f5; padding-top:16px; }
+    .help details { border:1px solid #e0e7ef; border-radius:12px; padding:11px 13px; background:#fbfcfe; }
+    .help summary { cursor:pointer; font-weight:800; font-size:12px; }
+    .help-box { margin-top:11px; display:flex; gap:7px; }
     .help-box input { flex:1; }
-    .help-response { margin-top:10px; font-size:13px; color:#475467; line-height:1.5; white-space:pre-wrap; }
-    .note { margin-top:12px; font-size:11px; color:#667085; line-height:1.5; }
-    @media(max-width:700px){ .grid{grid-template-columns:1fr}.full{grid-column:auto}.slots{grid-template-columns:1fr 1fr}.hero{padding:22px}.content{padding:20px}.hero h1{font-size:25px} }
+    .help-response { margin-top:9px; font-size:12px; color:#475467; line-height:1.5; white-space:pre-wrap; }
+    .note { margin-top:11px; font-size:11px; color:#667085; line-height:1.5; }
+    @media(max-width:820px){ .week-grid{grid-template-columns:repeat(4,1fr)} .day-list{grid-template-columns:repeat(4,1fr)} }
+    @media(max-width:620px){ .grid{grid-template-columns:1fr}.full{grid-column:auto}.week-grid{grid-template-columns:repeat(2,1fr)}.day-list{grid-template-columns:repeat(3,1fr)}.month-day{min-height:64px;padding:5px}.hero{padding:20px}.content{padding:18px}.hero h1{font-size:24px} }
   </style>
 </head>
 <body>
   <div class="shell">
     <div class="top">
-      <div class="brand"><strong>Demo Dental Hospital</strong><span>Fast appointment booking</span></div>
+      <div class="brand"><strong>Demo Dental Hospital</strong><span>Live appointment inventory</span></div>
       <div class="pill">Booking fee ₹100</div>
     </div>
 
     <div class="card">
       <div class="hero">
         <h1>Book your dental appointment</h1>
-        <p>Tell us who the appointment is for, choose a slot, and complete payment. No long conversation.</p>
+        <p>Choose a convenient time and complete payment. Target: confirmed in under 30 seconds.</p>
         <div class="steps">
           <span id="s1" class="step active">1. Details</span>
-          <span id="s2" class="step">2. Slot</span>
+          <span id="s2" class="step">2. Calendar</span>
           <span id="s3" class="step">3. Payment</span>
           <span id="s4" class="step">4. Confirmed</span>
         </div>
@@ -81,16 +124,49 @@
             <div class="field"><label>First name</label><input id="firstName" value="Madhu" autocomplete="given-name" /></div>
             <div class="field"><label>Last name</label><input id="lastName" value="Padishala" autocomplete="family-name" /></div>
             <div class="field"><label>Age</label><input id="age" type="number" min="1" max="120" value="30" /></div>
-            <div class="field"><label>Gender</label><select id="gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></div>
-            <div class="full"><button id="continueBtn" class="btn btn-primary">Show next available slots</button></div>
+            <div class="field"><label>Gender</label><select id="gender"><option value="">Select</option><option selected>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></div>
+            <div class="full"><button id="continueBtn" class="btn btn-primary">Open appointment calendar</button></div>
           </div>
-          <div class="note">In production, contact details can come from the website form, WhatsApp, Meta lead, CRM or calling channel instead of being asked again.</div>
         </section>
 
         <section id="slotStep" class="hidden">
-          <h2 class="section-title">Choose a convenient slot</h2>
-          <p class="section-sub">These are the next available appointments.</p>
-          <div id="slots" class="slots"></div>
+          <div class="calendar-top">
+            <div>
+              <h2 class="section-title">Choose your slot</h2>
+              <p class="section-sub">Green times are available. Inventory refreshes automatically.</p>
+            </div>
+            <div class="view-switch">
+              <button class="view-btn" data-view="day">Day</button>
+              <button class="view-btn active" data-view="week">Week</button>
+              <button class="view-btn" data-view="month">Month</button>
+            </div>
+          </div>
+
+          <div class="live-strip">
+            <span class="live-dot"></span>
+            <strong id="demoLabel">Demo live activity</strong>
+            <span><b id="activeCount">—</b> booking sessions active</span>
+            <span style="margin-left:auto" id="refreshText">Refreshing…</span>
+          </div>
+
+          <div class="legend">
+            <span><i class="available-dot"></i>Available</span>
+            <span><i class="held-dot"></i>Held</span>
+            <span><i class="booked-dot"></i>Booked</span>
+            <span><i class="blocked-dot"></i>Blocked</span>
+          </div>
+
+          <div class="calendar-top" style="margin-bottom:10px">
+            <div class="calendar-nav">
+              <button id="prevBtn" class="nav-btn">‹</button>
+              <div id="periodLabel" class="period-label">—</div>
+              <button id="nextBtn" class="nav-btn">›</button>
+            </div>
+            <button id="todayBtn" class="btn btn-ghost">Today</button>
+          </div>
+
+          <div id="calendar"></div>
+          <div id="recovery" class="recovery hidden"></div>
         </section>
 
         <section id="paymentStep" class="hidden">
@@ -126,12 +202,21 @@
   let leadId = null;
   let paymentReference = null;
   let selectedSlotText = '';
+  let calendarData = [];
+  let view = 'week';
+  let anchor = new Date();
+  let pollTimer = null;
   const $ = (id) => document.getElementById(id);
 
   async function json(url, options = {}) {
-    const response = await fetch(url, { headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }, ...options });
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+    const response = await fetch(url, { headers: { 'Content-Type':'application/json', ...(options.headers || {}) }, ...options });
+    let body = {};
+    try { body = await response.json(); } catch {}
+    if (!response.ok) {
+      const error = new Error(body.error || `Request failed (${response.status})`);
+      error.payload = body;
+      throw error;
+    }
     return body;
   }
 
@@ -142,89 +227,186 @@
     }
   }
 
-  function formatSlot(iso) {
-    const d = new Date(iso);
-    return {
-      day: d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', timeZone:'Asia/Kolkata' }),
-      time: d.toLocaleTimeString('en-IN', { hour:'numeric', minute:'2-digit', hour12:true, timeZone:'Asia/Kolkata' })
-    };
+  function startOfDay(date) { const d = new Date(date); d.setHours(0,0,0,0); return d; }
+  function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate()+days); return d; }
+  function isoDay(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
+  function monday(date) { const d=startOfDay(date); const day=(d.getDay()+6)%7; return addDays(d,-day); }
+  function fmtTime(iso) { return new Date(iso).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'}); }
+  function fmtDate(iso) { return new Date(iso).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',timeZone:'Asia/Kolkata'}); }
+  function slotDay(slot) { return isoDay(new Date(slot.startsAt)); }
+
+  function getRange() {
+    if (view === 'day') {
+      const from=startOfDay(anchor); return {from,to:addDays(from,1)};
+    }
+    if (view === 'week') {
+      const from=monday(anchor); return {from,to:addDays(from,7)};
+    }
+    const from=new Date(anchor.getFullYear(),anchor.getMonth(),1);
+    const to=new Date(anchor.getFullYear(),anchor.getMonth()+1,1);
+    return {from,to};
   }
 
-  $('continueBtn').onclick = async () => {
+  async function loadCalendar(silent=false) {
+    const {from,to}=getRange();
     try {
-      $('continueBtn').disabled = true;
-      const data = await json('/api/web/session', { method:'POST', body:JSON.stringify({
-        firstName:$('firstName').value,
-        lastName:$('lastName').value,
-        age:$('age').value,
-        gender:$('gender').value
-      }) });
-      leadId = data.leadId;
-      $('detailsStep').classList.add('hidden');
-      $('slotStep').classList.remove('hidden');
-      $('help').classList.remove('hidden');
-      setStep(2);
-      $('slots').innerHTML = '';
-      data.slots.forEach(slot => {
-        const f = formatSlot(slot.startsAt);
-        const button = document.createElement('button');
-        button.className = 'slot';
-        button.innerHTML = `<strong>${f.time}</strong><span>${f.day}</span>`;
-        button.onclick = () => chooseSlot(slot.id, `${f.day}, ${f.time}`, button);
-        $('slots').appendChild(button);
-      });
-    } catch (e) {
-      alert(e.message);
-      $('continueBtn').disabled = false;
-    }
-  };
-
-  async function chooseSlot(slotId, text, button) {
-    try {
-      document.querySelectorAll('.slot').forEach(x => x.disabled = true);
-      const data = await json('/api/web/slot', { method:'POST', body:JSON.stringify({ leadId, slotId }) });
-      paymentReference = data.paymentReference;
-      selectedSlotText = text;
-      $('slotStep').classList.add('hidden');
-      $('paymentStep').classList.remove('hidden');
-      $('sumName').textContent = `${$('firstName').value} ${$('lastName').value}`;
-      $('sumDemo').textContent = `${$('age').value} / ${$('gender').value}`;
-      $('sumSlot').textContent = text;
-      setStep(3);
-    } catch (e) {
-      alert(e.message);
-      document.querySelectorAll('.slot').forEach(x => x.disabled = false);
+      const data=await json(`/api/web/calendar?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`);
+      calendarData=data.slots || [];
+      $('activeCount').textContent=data.activeBookingCount;
+      $('demoLabel').textContent=data.demoLabel || 'Demo live activity';
+      $('refreshText').textContent='Live · ' + new Date(data.refreshedAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      renderCalendar();
+    } catch(e) {
+      if (!silent) alert(e.message);
     }
   }
 
-  $('payBtn').onclick = async () => {
-    try {
-      $('payBtn').disabled = true;
-      const data = await json('/api/web/payment/confirm', { method:'POST', body:JSON.stringify({ leadId, paymentReference }) });
-      $('paymentStep').classList.add('hidden');
-      $('successStep').classList.remove('hidden');
-      $('successText').textContent = `${$('firstName').value}, your appointment for ${selectedSlotText} is confirmed.`;
-      setStep(4);
-    } catch (e) {
-      alert(e.message);
-      $('payBtn').disabled = false;
-    }
-  };
+  function renderCalendar() {
+    document.querySelectorAll('.view-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===view));
+    if (view==='day') renderDay();
+    else if (view==='week') renderWeek();
+    else renderMonth();
+  }
 
-  $('helpBtn').onclick = async () => {
-    const message = $('helpInput').value.trim();
-    if (!message || !leadId) return;
-    $('helpBtn').disabled = true;
-    $('helpResponse').textContent = 'Checking…';
-    try {
-      const data = await json('/api/web/chat', { method:'POST', body:JSON.stringify({ leadId, message }) });
-      $('helpResponse').textContent = data.message;
-    } catch (e) {
-      $('helpResponse').textContent = e.message;
-    } finally {
-      $('helpBtn').disabled = false;
+  function makeSlot(slot) {
+    const b=document.createElement('button');
+    b.className=`time-slot ${slot.status.toLowerCase()}`;
+    b.textContent=fmtTime(slot.startsAt);
+    b.title=`${fmtDate(slot.startsAt)} · ${slot.status}`;
+    b.addEventListener('click',()=>onSlotClick(slot,b));
+    return b;
+  }
+
+  function renderDay() {
+    const day=isoDay(anchor);
+    $('periodLabel').textContent=new Date(anchor).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+    const items=calendarData.filter(s=>slotDay(s)===day);
+    const wrap=document.createElement('div'); wrap.className='day-list';
+    items.forEach(s=>wrap.appendChild(makeSlot(s)));
+    $('calendar').innerHTML=''; $('calendar').appendChild(wrap);
+  }
+
+  function renderWeek() {
+    const start=monday(anchor);
+    const end=addDays(start,6);
+    $('periodLabel').textContent=`${start.toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${end.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}`;
+    const grid=document.createElement('div'); grid.className='week-grid';
+    for(let i=0;i<7;i++) {
+      const d=addDays(start,i); const key=isoDay(d);
+      const col=document.createElement('div'); col.className='day-col';
+      const head=document.createElement('div'); head.className='day-head';
+      head.innerHTML=`<strong>${d.toLocaleDateString('en-IN',{weekday:'short'})}</strong><span>${d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span>`;
+      const times=document.createElement('div'); times.className='times';
+      calendarData.filter(s=>slotDay(s)===key).forEach(s=>times.appendChild(makeSlot(s)));
+      col.append(head,times); grid.appendChild(col);
     }
-  };
+    $('calendar').innerHTML=''; $('calendar').appendChild(grid);
+  }
+
+  function renderMonth() {
+    $('periodLabel').textContent=anchor.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    const grid=document.createElement('div'); grid.className='month-grid';
+    ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(x=>{const h=document.createElement('div');h.className='month-weekday';h.textContent=x;grid.appendChild(h)});
+    const first=new Date(anchor.getFullYear(),anchor.getMonth(),1);
+    const offset=(first.getDay()+6)%7;
+    for(let i=0;i<offset;i++){const e=document.createElement('div');e.className='month-day empty';grid.appendChild(e)}
+    const days=new Date(anchor.getFullYear(),anchor.getMonth()+1,0).getDate();
+    for(let day=1;day<=days;day++) {
+      const d=new Date(anchor.getFullYear(),anchor.getMonth(),day); const key=isoDay(d);
+      const items=calendarData.filter(s=>slotDay(s)===key);
+      const available=items.filter(s=>s.status==='AVAILABLE').length;
+      const pct=items.length?Math.round((available/items.length)*100):0;
+      const cell=document.createElement('button'); cell.className='month-day';
+      cell.innerHTML=`<div class="month-num">${day}</div><div class="month-meta">${available} open</div><div class="availability-bar"><span style="width:${pct}%"></span></div>`;
+      cell.disabled=!items.length;
+      cell.addEventListener('click',()=>{anchor=d;view='day';loadCalendar()});
+      grid.appendChild(cell);
+    }
+    $('calendar').innerHTML=''; $('calendar').appendChild(grid);
+  }
+
+  async function onSlotClick(slot, button) {
+    if (slot.status==='AVAILABLE') return chooseSlot(slot,button);
+    showRecoveryLoading(slot);
+    setTimeout(async()=>{
+      try {
+        const data=await json(`/api/web/recovery?slotId=${encodeURIComponent(slot.id)}`);
+        showRecovery(slot,data);
+      } catch(e) { $('recovery').innerHTML=`<strong>Couldn’t recheck this slot.</strong><p>${e.message}</p>`; }
+    },5000);
+  }
+
+  function showRecoveryLoading(slot) {
+    $('recovery').classList.remove('hidden');
+    $('recovery').innerHTML=`<strong>${fmtTime(slot.startsAt)} is currently ${slot.status.toLowerCase()}.</strong><p>Checking whether another doctor or nearby slot has become available…</p>`;
+  }
+
+  function showRecovery(slot,data) {
+    const box=$('recovery'); box.innerHTML='';
+    const title=document.createElement('strong'); title.textContent='We found alternatives'; box.appendChild(title);
+    const p=document.createElement('p'); p.textContent='Choose a nearby opening, or join priority for the same time.'; box.appendChild(p);
+    const options=document.createElement('div'); options.className='recovery-options';
+    (data.alternatives||[]).slice(0,4).forEach(alt=>{
+      const b=document.createElement('button'); b.className='recovery-option'; b.textContent=`${fmtDate(alt.startsAt)} · ${fmtTime(alt.startsAt)}`;
+      b.addEventListener('click',()=>chooseSlot(alt,b)); options.appendChild(b);
+    });
+    const wait=document.createElement('button'); wait.className='recovery-option'; wait.textContent='Priority for same slot';
+    wait.addEventListener('click',()=>{box.innerHTML='<strong>Priority request saved for this demo.</strong><p>If the held slot is released, this flow would notify the patient first.</p>'});
+    options.appendChild(wait); box.appendChild(options);
+  }
+
+  async function chooseSlot(slot,button) {
+    if (!leadId) return;
+    try {
+      document.querySelectorAll('.time-slot,.recovery-option').forEach(x=>x.disabled=true);
+      button.classList.add('selected');
+      const data=await json('/api/web/slot',{method:'POST',body:JSON.stringify({leadId,slotId:slot.id})});
+      paymentReference=data.paymentReference;
+      selectedSlotText=`${fmtDate(slot.startsAt)}, ${fmtTime(slot.startsAt)}`;
+      $('slotStep').classList.add('hidden'); $('paymentStep').classList.remove('hidden');
+      $('sumName').textContent=`${$('firstName').value} ${$('lastName').value}`;
+      $('sumDemo').textContent=`${$('age').value} / ${$('gender').value}`;
+      $('sumSlot').textContent=selectedSlotText; setStep(3);
+      if (pollTimer) clearInterval(pollTimer);
+    } catch(e) {
+      document.querySelectorAll('.time-slot,.recovery-option').forEach(x=>x.disabled=false);
+      if (e.payload?.recovery) showRecovery(slot,e.payload.recovery); else alert(e.message);
+      loadCalendar(true);
+    }
+  }
+
+  $('continueBtn').addEventListener('click',async()=>{
+    try {
+      $('continueBtn').disabled=true;
+      const data=await json('/api/web/session',{method:'POST',body:JSON.stringify({firstName:$('firstName').value,lastName:$('lastName').value,age:$('age').value,gender:$('gender').value})});
+      leadId=data.leadId;
+      $('detailsStep').classList.add('hidden'); $('slotStep').classList.remove('hidden'); $('help').classList.remove('hidden'); setStep(2);
+      anchor=addDays(new Date(),1); view='week'; await loadCalendar();
+      pollTimer=setInterval(()=>loadCalendar(true),3000);
+    } catch(e) { alert(e.message); $('continueBtn').disabled=false; }
+  });
+
+  document.querySelectorAll('.view-btn').forEach(btn=>btn.addEventListener('click',()=>{view=btn.dataset.view;loadCalendar()}));
+  $('prevBtn').addEventListener('click',()=>{anchor=view==='day'?addDays(anchor,-1):view==='week'?addDays(anchor,-7):new Date(anchor.getFullYear(),anchor.getMonth()-1,1);loadCalendar()});
+  $('nextBtn').addEventListener('click',()=>{anchor=view==='day'?addDays(anchor,1):view==='week'?addDays(anchor,7):new Date(anchor.getFullYear(),anchor.getMonth()+1,1);loadCalendar()});
+  $('todayBtn').addEventListener('click',()=>{anchor=new Date();loadCalendar()});
+
+  $('payBtn').addEventListener('click',async()=>{
+    try {
+      $('payBtn').disabled=true;
+      await json('/api/web/payment/confirm',{method:'POST',body:JSON.stringify({leadId,paymentReference})});
+      $('paymentStep').classList.add('hidden'); $('successStep').classList.remove('hidden');
+      $('successText').textContent=`${$('firstName').value}, your appointment for ${selectedSlotText} is confirmed.`; setStep(4);
+    } catch(e) { alert(e.message); $('payBtn').disabled=false; }
+  });
+
+  $('helpBtn').addEventListener('click',async()=>{
+    const message=$('helpInput').value.trim(); if(!message||!leadId)return;
+    $('helpBtn').disabled=true; $('helpResponse').textContent='Checking…';
+    try { const data=await json('/api/web/chat',{method:'POST',body:JSON.stringify({leadId,message})}); $('helpResponse').textContent=data.message; }
+    catch(e){ $('helpResponse').textContent=e.message; }
+    finally { $('helpBtn').disabled=false; }
+  });
 </script>
 </body>
 </html>
