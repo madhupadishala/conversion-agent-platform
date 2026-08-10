@@ -3,137 +3,130 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dental Conversion Agent Demo</title>
+  <title>Dental Appointment Booking</title>
   <style>
-    :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f4f7fb; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top left, #e6f4ff 0, transparent 32%), radial-gradient(circle at bottom right, #efe7ff 0, transparent 30%), #f5f7fb; }
-    .shell { max-width: 1180px; margin: 0 auto; padding: 28px 18px; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .logo { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: #172033; color: white; font-weight: 800; }
-    .brand h1 { font-size: 18px; margin: 0; }
-    .brand p { margin: 3px 0 0; color: #6b7280; font-size: 13px; }
-    .pill { font-size: 12px; border: 1px solid #d7deea; background: white; padding: 8px 11px; border-radius: 999px; color: #4b5563; }
-    .layout { display: grid; grid-template-columns: 1fr 320px; gap: 18px; }
-    .card { background: rgba(255,255,255,.94); border: 1px solid #e4e9f2; border-radius: 22px; box-shadow: 0 18px 50px rgba(31,41,55,.08); overflow: hidden; }
-    .chat-card { min-height: 720px; display: flex; flex-direction: column; }
-    .chat-head { padding: 20px 22px; border-bottom: 1px solid #edf0f5; display: flex; justify-content: space-between; align-items: center; }
-    .chat-head strong { font-size: 17px; }
-    .status-dot { width: 9px; height: 9px; border-radius: 50%; background: #16a34a; display: inline-block; margin-right: 7px; }
-    .chat-body { flex: 1; padding: 22px; overflow-y: auto; background: linear-gradient(180deg, #fbfcfe, #f7f9fc); }
-    .msg { max-width: 78%; padding: 12px 14px; border-radius: 16px; margin: 9px 0; line-height: 1.45; font-size: 14px; white-space: pre-wrap; }
-    .assistant { background: white; border: 1px solid #e1e7f0; border-bottom-left-radius: 6px; }
-    .user { margin-left: auto; color: white; background: #172033; border-bottom-right-radius: 6px; }
-    .system { max-width: 100%; text-align: center; background: transparent; color: #6b7280; font-size: 12px; padding: 6px; }
-    .composer { padding: 16px; border-top: 1px solid #edf0f5; background: white; }
-    .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-    .chip { border: 1px solid #dce3ed; background: #f8fafc; border-radius: 999px; padding: 7px 10px; font-size: 12px; cursor: pointer; }
-    .input-row { display: flex; gap: 9px; }
-    input, button { font: inherit; }
-    .text-input { flex: 1; border: 1px solid #d7deea; border-radius: 13px; padding: 12px 13px; outline: none; }
-    .text-input:focus { border-color: #9aa8bd; box-shadow: 0 0 0 3px #eef2f7; }
-    .btn { border: 0; border-radius: 13px; padding: 12px 16px; cursor: pointer; font-weight: 700; }
-    .btn-primary { background: #172033; color: white; }
-    .btn-accent { background: #0f766e; color: white; width: 100%; margin-top: 8px; }
-    .btn:disabled { opacity: .5; cursor: wait; }
-    .side { display: flex; flex-direction: column; gap: 18px; }
-    .panel { padding: 18px; }
-    .panel h3 { margin: 0 0 14px; font-size: 14px; }
-    .metric { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f5; font-size: 13px; }
-    .metric:last-child { border-bottom: 0; }
-    .metric span:first-child { color: #6b7280; }
-    .badge { display: inline-block; border-radius: 999px; padding: 5px 9px; background: #edf2f7; font-size: 11px; font-weight: 800; letter-spacing: .03em; }
-    .badge.success { background: #dcfce7; color: #166534; }
-    .badge.warn { background: #fef3c7; color: #92400e; }
-    .badge.danger { background: #fee2e2; color: #991b1b; }
-    .start-screen { padding: 30px; max-width: 520px; margin: auto; width: 100%; }
-    .start-screen h2 { font-size: 28px; margin: 0 0 10px; }
-    .start-screen p { color: #6b7280; line-height: 1.6; margin-bottom: 24px; }
-    .field { margin-bottom: 14px; }
-    .field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
-    .field input { width: 100%; border: 1px solid #d7deea; border-radius: 12px; padding: 12px; }
-    .note { margin-top: 12px; color: #6b7280; font-size: 11px; line-height: 1.5; }
-    .payment-box { margin: 12px 0; padding: 13px; border-radius: 14px; border: 1px solid #c7e7df; background: #f0fdfa; }
-    .payment-box strong { display: block; margin-bottom: 4px; }
-    .hidden { display: none !important; }
-    @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .side { order: -1; } .chat-card { min-height: 650px; } }
+    :root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:#172033; background:#f5f7fb; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:linear-gradient(180deg,#f7f9fc,#eef3f8); }
+    .shell { max-width:900px; margin:0 auto; padding:28px 18px 60px; }
+    .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; gap:12px; }
+    .brand strong { display:block; font-size:19px; }
+    .brand span { color:#6b7280; font-size:13px; }
+    .pill { background:#fff; border:1px solid #dfe5ed; border-radius:999px; padding:8px 11px; font-size:12px; color:#4b5563; }
+    .card { background:#fff; border:1px solid #e2e8f0; border-radius:22px; box-shadow:0 18px 50px rgba(15,23,42,.08); overflow:hidden; }
+    .hero { padding:28px 28px 18px; border-bottom:1px solid #edf1f5; }
+    .hero h1 { margin:0 0 8px; font-size:30px; letter-spacing:-.02em; }
+    .hero p { margin:0; color:#667085; line-height:1.55; }
+    .content { padding:26px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .field label { display:block; font-size:12px; font-weight:800; margin-bottom:6px; color:#344054; }
+    input, select, button { font:inherit; }
+    input, select { width:100%; border:1px solid #d7dee8; border-radius:12px; padding:12px 13px; background:#fff; }
+    input:focus, select:focus { outline:none; border-color:#94a3b8; box-shadow:0 0 0 3px #eef2f7; }
+    .full { grid-column:1/-1; }
+    .btn { border:0; border-radius:13px; padding:13px 16px; cursor:pointer; font-weight:800; }
+    .btn-primary { background:#172033; color:#fff; width:100%; }
+    .btn-pay { background:#0f766e; color:#fff; width:100%; margin-top:12px; }
+    .btn:disabled { opacity:.55; cursor:wait; }
+    .steps { display:flex; gap:8px; margin:18px 0 0; flex-wrap:wrap; }
+    .step { font-size:12px; padding:7px 10px; border-radius:999px; background:#f1f5f9; color:#64748b; font-weight:700; }
+    .step.active { background:#172033; color:#fff; }
+    .step.done { background:#dcfce7; color:#166534; }
+    .hidden { display:none !important; }
+    .section-title { margin:0 0 6px; font-size:20px; }
+    .section-sub { margin:0 0 18px; color:#667085; font-size:14px; }
+    .slots { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .slot { border:1px solid #dce3eb; background:#fff; border-radius:14px; padding:13px; cursor:pointer; text-align:left; }
+    .slot:hover { border-color:#94a3b8; background:#f8fafc; }
+    .slot strong { display:block; font-size:14px; }
+    .slot span { display:block; color:#667085; font-size:12px; margin-top:4px; }
+    .summary { border:1px solid #dfe7ee; border-radius:16px; padding:16px; background:#f8fafc; }
+    .row { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid #e7edf3; font-size:14px; }
+    .row:last-child { border-bottom:0; }
+    .row span { color:#667085; }
+    .success { text-align:center; padding:34px 20px; }
+    .success-mark { width:56px; height:56px; border-radius:50%; display:grid; place-items:center; margin:0 auto 14px; background:#dcfce7; color:#166534; font-size:26px; font-weight:900; }
+    .help { margin-top:18px; border-top:1px solid #edf1f5; padding-top:18px; }
+    .help details { border:1px solid #e0e7ef; border-radius:14px; padding:12px 14px; background:#fbfcfe; }
+    .help summary { cursor:pointer; font-weight:800; font-size:13px; }
+    .help-box { margin-top:12px; display:flex; gap:8px; }
+    .help-box input { flex:1; }
+    .help-response { margin-top:10px; font-size:13px; color:#475467; line-height:1.5; white-space:pre-wrap; }
+    .note { margin-top:12px; font-size:11px; color:#667085; line-height:1.5; }
+    @media(max-width:700px){ .grid{grid-template-columns:1fr}.full{grid-column:auto}.slots{grid-template-columns:1fr 1fr}.hero{padding:22px}.content{padding:20px}.hero h1{font-size:25px} }
   </style>
 </head>
 <body>
   <div class="shell">
-    <div class="topbar">
-      <div class="brand"><div class="logo">CA</div><div><h1>Conversion Agent</h1><p>Dental vertical · web-first V1</p></div></div>
-      <div class="pill"><span class="status-dot"></span>Governed demo runtime</div>
+    <div class="top">
+      <div class="brand"><strong>Demo Dental Hospital</strong><span>Fast appointment booking</span></div>
+      <div class="pill">Booking fee ₹100</div>
     </div>
 
-    <div class="layout">
-      <section class="card chat-card">
-        <div id="start" class="start-screen">
-          <h2>Turn an enquiry into a booked appointment.</h2>
-          <p>This demo uses the same governed conversion engine intended for client deployments. It can answer only approved clinic information, qualify an enquiry, offer demo slots, and move a booking through payment confirmation.</p>
-          <div class="field"><label>Your name</label><input id="name" value="Madhu" autocomplete="name" /></div>
-          <div class="field"><label>Phone number</label><input id="phone" value="9391250889" autocomplete="tel" /></div>
-          <div class="field"><label>What are you looking for?</label><input id="interest" value="Dental consultation" /></div>
-          <button id="startBtn" class="btn btn-primary" style="width:100%">Start enquiry</button>
-          <div class="note">Demo only: slots, payment, reminders and appointment confirmation are simulated in-memory. Clinical advice is intentionally blocked.</div>
+    <div class="card">
+      <div class="hero">
+        <h1>Book your dental appointment</h1>
+        <p>Tell us who the appointment is for, choose a slot, and complete payment. No long conversation.</p>
+        <div class="steps">
+          <span id="s1" class="step active">1. Details</span>
+          <span id="s2" class="step">2. Slot</span>
+          <span id="s3" class="step">3. Payment</span>
+          <span id="s4" class="step">4. Confirmed</span>
         </div>
+      </div>
 
-        <div id="chat" class="hidden" style="display:flex; flex:1; flex-direction:column; min-height:0">
-          <div class="chat-head"><div><strong>Demo Dental Hospital</strong><div style="font-size:12px;color:#6b7280;margin-top:3px">AI front desk · approved information only</div></div><span id="stateBadge" class="badge">CONTACTING</span></div>
-          <div id="messages" class="chat-body"></div>
-          <div class="composer">
-            <div class="chips">
-              <button class="chip" data-text="What are your working hours?">Working hours</button>
-              <button class="chip" data-text="I want to book a dental consultation.">Book consultation</button>
-              <button class="chip" data-text="Show me available appointment slots.">Available slots</button>
-              <button class="chip" data-text="I have severe tooth pain. Which medicine should I take?">Safety test</button>
-            </div>
-            <div class="input-row"><input id="message" class="text-input" placeholder="Type your enquiry…" /><button id="sendBtn" class="btn btn-primary">Send</button></div>
+      <div class="content">
+        <section id="detailsStep">
+          <div class="grid">
+            <div class="field"><label>First name</label><input id="firstName" value="Madhu" autocomplete="given-name" /></div>
+            <div class="field"><label>Last name</label><input id="lastName" value="Padishala" autocomplete="family-name" /></div>
+            <div class="field"><label>Age</label><input id="age" type="number" min="1" max="120" value="30" /></div>
+            <div class="field"><label>Gender</label><select id="gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option><option>Prefer not to say</option></select></div>
+            <div class="full"><button id="continueBtn" class="btn btn-primary">Show next available slots</button></div>
           </div>
-        </div>
-      </section>
+          <div class="note">In production, contact details can come from the website form, WhatsApp, Meta lead, CRM or calling channel instead of being asked again.</div>
+        </section>
 
-      <aside class="side">
-        <div class="card panel">
-          <h3>Live conversion state</h3>
-          <div class="metric"><span>Lead</span><strong id="leadId">—</strong></div>
-          <div class="metric"><span>Status</span><strong id="leadStatus">—</strong></div>
-          <div class="metric"><span>Payment</span><strong id="paymentStatus">—</strong></div>
-          <div class="metric"><span>Appointment</span><strong id="appointmentId">—</strong></div>
-          <div class="metric"><span>Handoff</span><strong id="handoff">No</strong></div>
+        <section id="slotStep" class="hidden">
+          <h2 class="section-title">Choose a convenient slot</h2>
+          <p class="section-sub">These are the next available appointments.</p>
+          <div id="slots" class="slots"></div>
+        </section>
+
+        <section id="paymentStep" class="hidden">
+          <h2 class="section-title">Confirm your booking</h2>
+          <p class="section-sub">Your slot is temporarily held. Complete payment to confirm.</p>
+          <div class="summary">
+            <div class="row"><span>Name</span><strong id="sumName">—</strong></div>
+            <div class="row"><span>Age / Gender</span><strong id="sumDemo">—</strong></div>
+            <div class="row"><span>Appointment</span><strong id="sumSlot">—</strong></div>
+            <div class="row"><span>Booking fee</span><strong>₹100</strong></div>
+          </div>
+          <button id="payBtn" class="btn btn-pay">Pay ₹100 & confirm appointment</button>
+        </section>
+
+        <section id="successStep" class="hidden success">
+          <div class="success-mark">✓</div>
+          <h2 class="section-title">Appointment confirmed</h2>
+          <p class="section-sub" id="successText">Your booking is confirmed.</p>
+        </section>
+
+        <div id="help" class="help hidden">
+          <details>
+            <summary>Need help or want to ask a question?</summary>
+            <div class="help-box"><input id="helpInput" placeholder="Ask about working hours, services, etc." /><button id="helpBtn" class="btn btn-primary" style="width:auto">Ask</button></div>
+            <div id="helpResponse" class="help-response"></div>
+          </details>
         </div>
-        <div class="card panel">
-          <h3>Release boundary</h3>
-          <div style="font-size:12px;line-height:1.6;color:#5f6878">This vertical slice proves the conversion workflow without telephony. Google Calendar, Razorpay and messaging adapters remain separate integration steps after the core flow passes.</div>
-        </div>
-      </aside>
+      </div>
     </div>
   </div>
 
 <script>
   let leadId = null;
-  let busy = false;
+  let paymentReference = null;
+  let selectedSlotText = '';
   const $ = (id) => document.getElementById(id);
-
-  function addMessage(text, who = 'assistant') {
-    const div = document.createElement('div');
-    div.className = `msg ${who}`;
-    div.textContent = text;
-    $('messages').appendChild(div);
-    $('messages').scrollTop = $('messages').scrollHeight;
-  }
-
-  function setLead(lead) {
-    if (!lead) return;
-    $('leadId').textContent = lead.id || '—';
-    $('leadStatus').textContent = lead.status || '—';
-    $('paymentStatus').textContent = lead.paymentStatus || '—';
-    $('appointmentId').textContent = lead.appointmentId || '—';
-    $('handoff').textContent = lead.handoffReason ? 'Required' : 'No';
-    $('stateBadge').textContent = lead.status || '—';
-    $('stateBadge').className = 'badge ' + (lead.status === 'CONFIRMED' ? 'success' : lead.status === 'HUMAN_HANDOFF' ? 'danger' : lead.status === 'PAYMENT_PENDING' ? 'warn' : '');
-  }
 
   async function json(url, options = {}) {
     const response = await fetch(url, { headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }, ...options });
@@ -142,70 +135,96 @@
     return body;
   }
 
-  $('startBtn').addEventListener('click', async () => {
-    try {
-      $('startBtn').disabled = true;
-      const data = await json('/api/web/session', { method: 'POST', body: JSON.stringify({ name: $('name').value, phone: $('phone').value, serviceInterest: $('interest').value }) });
-      leadId = data.leadId;
-      $('start').classList.add('hidden');
-      $('chat').classList.remove('hidden');
-      setLead(data.lead);
-      addMessage(data.greeting);
-    } catch (error) {
-      alert(error.message);
-      $('startBtn').disabled = false;
-    }
-  });
-
-  async function send(text) {
-    text = (text || '').trim();
-    if (!text || !leadId || busy) return;
-    busy = true;
-    $('sendBtn').disabled = true;
-    addMessage(text, 'user');
-    $('message').value = '';
-    try {
-      const data = await json('/api/web/chat', { method: 'POST', body: JSON.stringify({ leadId, message: text }) });
-      addMessage(data.message);
-      setLead(data.lead);
-      if (data.handoff) addMessage('Conversation routed for human follow-up.', 'system');
-      if (data.paymentReady && data.paymentReference) {
-        const box = document.createElement('div');
-        box.className = 'payment-box';
-        const amount = (data.bookingFeeMinor / 100).toLocaleString('en-IN', { style: 'currency', currency: data.currency });
-        box.innerHTML = `<strong>Booking payment ready</strong><span style="font-size:12px;color:#54606f">${amount} demo payment · appointment confirms only after payment.</span>`;
-        const button = document.createElement('button');
-        button.className = 'btn btn-accent';
-        button.textContent = `Simulate ${amount} payment & confirm`;
-        button.onclick = async () => {
-          button.disabled = true;
-          try {
-            const confirmed = await json('/api/web/payment/confirm', { method: 'POST', body: JSON.stringify({ leadId, paymentReference: data.paymentReference }) });
-            addMessage(confirmed.message, 'assistant');
-            addMessage(`${confirmed.reminders.length} appointment reminder(s) scheduled.`, 'system');
-            setLead(confirmed.lead);
-            box.remove();
-          } catch (error) {
-            addMessage(`Payment simulation failed: ${error.message}`, 'system');
-            button.disabled = false;
-          }
-        };
-        box.appendChild(button);
-        $('messages').appendChild(box);
-        $('messages').scrollTop = $('messages').scrollHeight;
-      }
-    } catch (error) {
-      addMessage(`System error: ${error.message}`, 'system');
-    } finally {
-      busy = false;
-      $('sendBtn').disabled = false;
-      $('message').focus();
+  function setStep(n) {
+    for (let i=1;i<=4;i++) {
+      const el = $(`s${i}`);
+      el.className = 'step ' + (i < n ? 'done' : i === n ? 'active' : '');
     }
   }
 
-  $('sendBtn').addEventListener('click', () => send($('message').value));
-  $('message').addEventListener('keydown', (e) => { if (e.key === 'Enter') send($('message').value); });
-  document.querySelectorAll('.chip').forEach((chip) => chip.addEventListener('click', () => send(chip.dataset.text)));
+  function formatSlot(iso) {
+    const d = new Date(iso);
+    return {
+      day: d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', timeZone:'Asia/Kolkata' }),
+      time: d.toLocaleTimeString('en-IN', { hour:'numeric', minute:'2-digit', hour12:true, timeZone:'Asia/Kolkata' })
+    };
+  }
+
+  $('continueBtn').onclick = async () => {
+    try {
+      $('continueBtn').disabled = true;
+      const data = await json('/api/web/session', { method:'POST', body:JSON.stringify({
+        firstName:$('firstName').value,
+        lastName:$('lastName').value,
+        age:$('age').value,
+        gender:$('gender').value
+      }) });
+      leadId = data.leadId;
+      $('detailsStep').classList.add('hidden');
+      $('slotStep').classList.remove('hidden');
+      $('help').classList.remove('hidden');
+      setStep(2);
+      $('slots').innerHTML = '';
+      data.slots.forEach(slot => {
+        const f = formatSlot(slot.startsAt);
+        const button = document.createElement('button');
+        button.className = 'slot';
+        button.innerHTML = `<strong>${f.time}</strong><span>${f.day}</span>`;
+        button.onclick = () => chooseSlot(slot.id, `${f.day}, ${f.time}`, button);
+        $('slots').appendChild(button);
+      });
+    } catch (e) {
+      alert(e.message);
+      $('continueBtn').disabled = false;
+    }
+  };
+
+  async function chooseSlot(slotId, text, button) {
+    try {
+      document.querySelectorAll('.slot').forEach(x => x.disabled = true);
+      const data = await json('/api/web/slot', { method:'POST', body:JSON.stringify({ leadId, slotId }) });
+      paymentReference = data.paymentReference;
+      selectedSlotText = text;
+      $('slotStep').classList.add('hidden');
+      $('paymentStep').classList.remove('hidden');
+      $('sumName').textContent = `${$('firstName').value} ${$('lastName').value}`;
+      $('sumDemo').textContent = `${$('age').value} / ${$('gender').value}`;
+      $('sumSlot').textContent = text;
+      setStep(3);
+    } catch (e) {
+      alert(e.message);
+      document.querySelectorAll('.slot').forEach(x => x.disabled = false);
+    }
+  }
+
+  $('payBtn').onclick = async () => {
+    try {
+      $('payBtn').disabled = true;
+      const data = await json('/api/web/payment/confirm', { method:'POST', body:JSON.stringify({ leadId, paymentReference }) });
+      $('paymentStep').classList.add('hidden');
+      $('successStep').classList.remove('hidden');
+      $('successText').textContent = `${$('firstName').value}, your appointment for ${selectedSlotText} is confirmed.`;
+      setStep(4);
+    } catch (e) {
+      alert(e.message);
+      $('payBtn').disabled = false;
+    }
+  };
+
+  $('helpBtn').onclick = async () => {
+    const message = $('helpInput').value.trim();
+    if (!message || !leadId) return;
+    $('helpBtn').disabled = true;
+    $('helpResponse').textContent = 'Checking…';
+    try {
+      const data = await json('/api/web/chat', { method:'POST', body:JSON.stringify({ leadId, message }) });
+      $('helpResponse').textContent = data.message;
+    } catch (e) {
+      $('helpResponse').textContent = e.message;
+    } finally {
+      $('helpBtn').disabled = false;
+    }
+  };
 </script>
 </body>
 </html>
