@@ -15,6 +15,8 @@ import {
   IncrementingIdGenerator,
 } from "./in-memory.js";
 
+type InventoryStatus = "AVAILABLE" | "HELD" | "BOOKED" | "BLOCKED";
+
 const required = (name: string): string => {
   const value = process.env[name];
   if (!value) throw new Error(`Missing environment variable ${name}`);
@@ -41,22 +43,44 @@ if (config.tenantId !== tenantId) throw new Error("TENANT_CONFIG_JSON tenantId m
 
 const leads = new InMemoryLeadRepository();
 const configs = new InMemoryClientConfigRepository([config]);
-const now = new Date();
 const demoSlots: Slot[] = [];
-for (let day = 1; day <= 3; day++) {
-  for (const hour of [10, 12, 16]) {
-    const start = new Date(now);
-    start.setDate(start.getDate() + day);
-    start.setHours(hour, 0, 0, 0);
-    demoSlots.push({
-      id: `slot-${day}-${hour}`,
-      tenantId,
-      providerId: "demo-dentist",
-      startsAt: start.toISOString(),
-      endsAt: new Date(start.getTime() + 30 * 60_000).toISOString(),
-      mode: "OFFLINE",
-      available: true,
-    });
+const inventory = new Map<string, InventoryStatus>();
+const now = new Date();
+
+const isConvenienceWindow = (hour: number, minute: number) =>
+  hour < 10 || (hour === 12 && minute >= 30) || hour === 13 || hour >= 17;
+
+for (let day = 1; day <= 42; day++) {
+  const date = new Date(now);
+  date.setDate(date.getDate() + day);
+  if (date.getDay() === 0) continue;
+  let index = 0;
+  for (let hour = 9; hour < 20; hour++) {
+    for (const minute of [0, 30]) {
+      const start = new Date(date);
+      start.setHours(hour, minute, 0, 0);
+      const id = `slot-${day}-${hour}-${minute}`;
+      const protectedWindow = isConvenienceWindow(hour, minute);
+      const seed = (day * 17 + hour * 7 + minute + index * 3) % 100;
+      let status: InventoryStatus;
+      if (hour === 14 && minute === 0) status = "BLOCKED";
+      else if (protectedWindow) status = seed < 88 ? "AVAILABLE" : "HELD";
+      else if (seed < 66) status = "AVAILABLE";
+      else if (seed < 84) status = "BOOKED";
+      else status = "HELD";
+      const slot: Slot = {
+        id,
+        tenantId,
+        providerId: index % 4 === 0 ? "demo-dentist-b" : "demo-dentist-a",
+        startsAt: start.toISOString(),
+        endsAt: new Date(start.getTime() + 30 * 60_000).toISOString(),
+        mode: "OFFLINE",
+        available: status === "AVAILABLE",
+      };
+      demoSlots.push(slot);
+      inventory.set(id, status);
+      index += 1;
+    }
   }
 }
 
@@ -103,12 +127,52 @@ const publicLead = async (leadId: string) => {
   };
 };
 
-const publicSlots = (items: Slot[]) => items.slice(0, 6).map((slot) => ({
+const effectiveStatus = (slot: Slot): InventoryStatus => {
+  const appointment = Array.from(slots.appointments.values()).find((item) => item.slotId === slot.id);
+  if (appointment?.status === "CONFIRMED") return "BOOKED";
+  if (appointment?.status === "HELD") return "HELD";
+  return inventory.get(slot.id) ?? (slot.available ? "AVAILABLE" : "BOOKED");
+};
+
+const publicSlot = (slot: Slot) => ({
   id: slot.id,
   startsAt: slot.startsAt,
   endsAt: slot.endsAt,
+  providerId: slot.providerId,
   mode: slot.mode,
-}));
+  status: effectiveStatus(slot),
+});
+
+const nearestAvailable = (target: Slot, limit = 4) => demoSlots
+  .filter((slot) => slot.id !== target.id && effectiveStatus(slot) === "AVAILABLE" && new Date(slot.startsAt) > new Date())
+  .sort((a, b) => Math.abs(new Date(a.startsAt).getTime() - new Date(target.startsAt).getTime()) - Math.abs(new Date(b.startsAt).getTime() - new Date(target.startsAt).getTime()))
+  .slice(0, limit)
+  .map(publicSlot);
+
+let activityTick = 0;
+setInterval(() => {
+  activityTick += 1;
+  const candidates = demoSlots.filter((slot) => {
+    if (Array.from(slots.appointments.values()).some((appointment) => appointment.slotId === slot.id)) return false;
+    const d = new Date(slot.startsAt);
+    const hour = d.getHours();
+    const minute = d.getMinutes();
+    return d > new Date() && !isConvenienceWindow(hour, minute) && !(hour === 14 && minute === 0);
+  });
+  if (!candidates.length) return;
+  const slot = candidates[activityTick % candidates.length];
+  const current = inventory.get(slot.id);
+  if (current === "AVAILABLE" && activityTick % 3 !== 0) {
+    inventory.set(slot.id, "HELD");
+    slot.available = false;
+  } else if (current === "HELD") {
+    inventory.set(slot.id, activityTick % 5 === 0 ? "BOOKED" : "AVAILABLE");
+    slot.available = inventory.get(slot.id) === "AVAILABLE";
+  } else if (current === "BOOKED" && activityTick % 7 === 0) {
+    inventory.set(slot.id, "AVAILABLE");
+    slot.available = true;
+  }
+}, 4000);
 
 const server = createServer(async (req, res) => {
   try {
@@ -121,7 +185,29 @@ const server = createServer(async (req, res) => {
     }
 
     if (req.method === "GET" && url.pathname === "/health") {
-      return sendJson(res, 200, { ok: true, mode: "instant-booking-demo", tenantId, agent: "sarvam", model: sarvamModel });
+      return sendJson(res, 200, { ok: true, mode: "live-inventory-calendar-demo", tenantId, agent: "sarvam", model: sarvamModel });
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/web/calendar") {
+      const from = url.searchParams.get("from");
+      const to = url.searchParams.get("to");
+      const fromTime = from ? new Date(from).getTime() : Date.now();
+      const toTime = to ? new Date(to).getTime() : Date.now() + 42 * 24 * 60 * 60_000;
+      const items = demoSlots
+        .filter((slot) => {
+          const time = new Date(slot.startsAt).getTime();
+          return time >= fromTime && time <= toTime;
+        })
+        .map(publicSlot);
+      const available = items.filter((item) => item.status === "AVAILABLE").length;
+      return sendJson(res, 200, {
+        demoMode: true,
+        demoLabel: "Demo live activity",
+        activeBookingCount: 4 + (activityTick % 9),
+        refreshedAt: new Date().toISOString(),
+        totals: { slots: items.length, available, unavailable: items.length - available },
+        slots: items,
+      });
     }
 
     if (req.method === "POST" && url.pathname === "/api/web/session") {
@@ -155,11 +241,9 @@ const server = createServer(async (req, res) => {
         gender,
         intent: "appointment-booking",
       });
-      const available = await orchestrator.availableSlots(tenantId, lead.id);
       return sendJson(res, 201, {
         leadId: lead.id,
         message: `Thanks ${firstName}. Choose a convenient appointment slot.`,
-        slots: publicSlots(available),
         lead: await publicLead(lead.id),
       });
     }
@@ -171,18 +255,40 @@ const server = createServer(async (req, res) => {
       if (!leadId || !slotId) return sendJson(res, 400, { error: "leadId and slotId are required" });
       const lead = await leads.get(tenantId, leadId);
       if (!lead) return sendJson(res, 404, { error: "session not found" });
+      const selected = await slots.get(tenantId, slotId);
+      if (!selected) return sendJson(res, 404, { error: "slot not found" });
+      if (effectiveStatus(selected) !== "AVAILABLE") {
+        return sendJson(res, 409, {
+          error: "That slot is currently unavailable.",
+          recovery: {
+            waitlistAvailable: true,
+            alternatives: nearestAvailable(selected),
+          },
+        });
+      }
 
       await orchestrator.selectSlot(tenantId, leadId, slotId);
+      inventory.set(slotId, "HELD");
       const payment = await orchestrator.requestPayment(tenantId, leadId);
-      const selected = await slots.get(tenantId, slotId);
       return sendJson(res, 200, {
         message: "Slot held. Complete the booking payment to confirm your appointment.",
-        selectedSlot: selected ? publicSlots([selected])[0] : undefined,
+        selectedSlot: publicSlot(selected),
         paymentReady: Boolean(payment.paymentUrl),
         paymentReference: payment.lead.paymentReference,
         bookingFeeMinor: config.bookingFeeMinor,
         currency: config.currency,
         lead: await publicLead(leadId),
+      });
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/web/recovery") {
+      const slotId = url.searchParams.get("slotId") ?? "";
+      const target = await slots.get(tenantId, slotId);
+      if (!target) return sendJson(res, 404, { error: "slot not found" });
+      return sendJson(res, 200, {
+        target: publicSlot(target),
+        waitlistAvailable: true,
+        alternatives: nearestAvailable(target),
       });
     }
 
@@ -192,13 +298,8 @@ const server = createServer(async (req, res) => {
       const message = body.message?.trim();
       if (!leadId || !message) return sendJson(res, 400, { error: "leadId and message are required" });
       if (!(await leads.get(tenantId, leadId))) return sendJson(res, 404, { error: "session not found" });
-
       const result = await agent.handleTurn(tenantId, leadId, message);
-      return sendJson(res, 200, {
-        message: result.spokenText,
-        handoff: Boolean(result.handoff),
-        lead: await publicLead(leadId),
-      });
+      return sendJson(res, 200, { message: result.spokenText, handoff: Boolean(result.handoff), lead: await publicLead(leadId) });
     }
 
     if (req.method === "POST" && url.pathname === "/api/web/payment/confirm") {
@@ -208,6 +309,8 @@ const server = createServer(async (req, res) => {
       if (!leadId || !paymentReference) return sendJson(res, 400, { error: "leadId and paymentReference are required" });
       await orchestrator.confirmPayment(tenantId, leadId, paymentReference);
       const confirmed = await orchestrator.confirmAppointment(tenantId, leadId);
+      const lead = await leads.get(tenantId, leadId);
+      if (lead?.slotId) inventory.set(lead.slotId, "BOOKED");
       return sendJson(res, 200, {
         ok: true,
         message: "Payment received. Your appointment is confirmed.",
