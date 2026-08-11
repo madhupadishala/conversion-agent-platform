@@ -1,15 +1,195 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Behavioral Appointment Booking Demo</title><style>
-:root{font-family:Inter,system-ui,sans-serif;color:#172033;background:#f5f7fb}*{box-sizing:border-box}body{margin:0;background:linear-gradient(#f8fafc,#eef3f8);min-height:100vh}.shell{max-width:860px;margin:auto;padding:24px 16px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 14px 40px #0f172a12;overflow:hidden}.head{padding:22px 24px;border-bottom:1px solid #edf1f5}.head h1{margin:0 0 6px;font-size:27px}.head p{margin:0;color:#667085}.demo{display:inline-block;margin-top:10px;padding:5px 9px;border-radius:999px;background:#fff7ed;color:#9a3412;font-size:11px;font-weight:800}.body{padding:24px}.dates{display:flex;gap:7px;overflow:auto;padding-bottom:7px}.date{border:1px solid #dfe5ed;background:#fff;border-radius:10px;padding:9px 12px;font-weight:800;cursor:pointer;white-space:nowrap}.date.on{background:#172033;color:#fff}.meta{display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px;color:#667085;font-size:12px}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.slot{position:relative;border:1px solid #dfe5ed;border-radius:10px;padding:11px 5px;text-align:center;font-weight:850;background:#fff;cursor:pointer;transition:.18s}.slot.available:hover{border-color:#16a34a;background:#f0fdf4}.slot.booked{background:#f4f5f7;color:#98a2b3;text-decoration:line-through}.slot.held{background:#fff7ed;color:#9a3412}.slot.opened{background:#ecfdf3;color:#166534;border-color:#86efac;animation:pulse 1s ease 2}.slot small{display:block;font-size:9px;margin-top:3px;text-decoration:none}.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;color:#667085;font-size:11px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;background:#d0d5dd}.dot.a{background:#86efac}.dot.h{background:#fdba74}.recovery{margin-top:18px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:14px;padding:15px}.recovery h3{margin:0 0 5px;font-size:16px}.recovery p{margin:0 0 11px;color:#475467;font-size:12px}.premium{border:0;background:#172033;color:white;border-radius:10px;padding:11px 14px;font-weight:850;cursor:pointer}.toast{position:fixed;right:20px;bottom:20px;background:#172033;color:#fff;border-radius:10px;padding:11px 14px;font-size:12px;opacity:0;transform:translateY(8px);transition:.2s}.toast.on{opacity:1;transform:none}@keyframes pulse{50%{transform:scale(1.03)}}@media(max-width:620px){.grid{grid-template-columns:repeat(3,1fr)}.body{padding:18px}}
-</style></head><body><div class="shell"><div class="card"><div class="head"><h1>Explore all appointment times</h1><p>Tap any time. We’ll check the best matching doctor for you.</p><span class="demo">DEMO INVENTORY · simulated activity</span></div><div class="body"><div id="dates" class="dates"></div><div class="meta"><strong id="dayTitle">Today</strong><span id="availability"></span></div><div id="slots" class="grid"></div><div class="legend"><span><i class="dot a"></i>Available</span><span><i class="dot"></i>Booked</span><span><i class="dot h"></i>Temporarily held</span></div><div id="recovery" class="recovery" hidden><h3 id="recoveryTitle"></h3><p id="recoveryText"></p><button id="premiumBtn" class="premium"></button></div></div></div></div><div id="toast" class="toast"></div><script>
-const times=['8:00 am','8:30 am','9:00 am','9:30 am','10:00 am','10:30 am','11:00 am','11:30 am','12:00 pm','12:30 pm','1:00 pm','1:30 pm','2:00 pm','2:30 pm','4:00 pm','4:30 pm','5:00 pm','5:30 pm','6:00 pm','6:30 pm','7:00 pm','7:30 pm','8:00 pm','8:30 pm','9:00 pm','9:30 pm'];
-const doctors=['Dr. Ananya','Dr. Kiran','Dr. Meera']; const principal='Dr. Arjun Rao · Principal Dentist'; let day=0; let states={}; let interest={};
-function seeded(d,i){return (d*37+i*19+11)%100} function protectedTime(t){return /^8:|^8:30|12:|1:|4:|5:|6:|7:|8:|9:/.test(t)}
-function initDay(d){if(states[d])return; states[d]=times.map((t,i)=>{const s=seeded(d,i); if(protectedTime(t))return s<18?'booked':'available'; return s<31?'booked':s<36?'held':'available'}); let occupied=states[d].filter(x=>x!=='available').length; const target=Math.ceil(times.length*.27); for(let i=0;occupied<target&&i<times.length;i++){if(states[d][i]==='available'&&!protectedTime(times[i])){states[d][i]='booked';occupied++}}}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Behavior-responsive Appointment Booking</title>
+  <style>
+    :root{
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:#1f2937;background:#f7f7f8;
+      --free:#fde7ef;--free-border:#f5b7ca;--free-text:#7d2745;
+      --limited:#fff7bf;--limited-border:#e9d66b;--limited-text:#705d00;
+      --full:#b91c38;--full-dark:#8f1028;--full-text:#fff;
+      --ink:#172033;--muted:#667085;--line:#e5e7eb;--soft:#f8fafc;
+    }
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(180deg,#fafafa,#f1f4f7)}
+    button{font:inherit}.shell{max-width:940px;margin:auto;padding:24px 16px 64px}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .brand strong{display:block;font-size:18px}.brand span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+    .activity{display:flex;align-items:center;gap:7px;border:1px solid #dce4df;background:#fbfefc;border-radius:999px;padding:8px 11px;font-size:12px;color:#475467;white-space:nowrap}
+    .pulse{width:8px;height:8px;border-radius:50%;background:#22a35a;box-shadow:0 0 0 4px #dcfce7}
+    .card{background:#fff;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 16px 44px rgba(15,23,42,.07);overflow:hidden}
+    .head{padding:22px 24px 17px;border-bottom:1px solid #edf1f5}.head h1{margin:0 0 6px;font-size:27px;letter-spacing:-.02em}.head p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+    .demo{display:inline-flex;margin-top:10px;border-radius:999px;padding:5px 9px;background:#f8fafc;border:1px solid #e5e7eb;color:#64748b;font-size:10px;font-weight:800;letter-spacing:.03em}
+    .body{padding:22px 24px 26px}.dates{display:flex;gap:7px;overflow:auto;padding-bottom:5px}.date{border:1px solid #dfe5ed;background:#fff;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}.date.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+    .meta{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:17px 0 10px}.meta strong{font-size:15px}.meta span{font-size:11px;color:var(--muted)}
+    .legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;color:#667085;font-size:11px}.legend-item{display:flex;align-items:center;gap:5px}.swatch{width:11px;height:11px;border-radius:3px;border:1px solid}.swatch.free{background:var(--free);border-color:var(--free-border)}.swatch.limited{background:var(--limited);border-color:var(--limited-border)}.swatch.full{background:var(--full);border-color:var(--full-dark)}
+    .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.slot{position:relative;min-height:62px;border-radius:11px;padding:10px 5px;border:1px solid;cursor:pointer;text-align:center;font-weight:900;transition:transform .13s ease,box-shadow .13s ease}.slot:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(15,23,42,.08)}
+    .slot.free{background:var(--free);border-color:var(--free-border);color:var(--free-text)}.slot.limited{background:var(--limited);border-color:var(--limited-border);color:var(--limited-text)}.slot.full{background:var(--full);border-color:var(--full-dark);color:var(--full-text)}
+    .slot small{display:block;margin-top:4px;font-size:9px;font-weight:800;opacity:.82}.slot .tiny{position:absolute;right:5px;top:5px;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.25}
+    .protected-note{margin-top:12px;padding:10px 12px;border-radius:11px;background:#f8fafc;color:#64748b;font-size:11px;line-height:1.45}
+    .recovery{margin-top:16px;border:1px solid #d8e5dd;background:#f9fdf9;border-radius:15px;padding:15px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.recovery[hidden]{display:none}.recovery h3{margin:0 0 5px;font-size:16px}.recovery p{margin:0;color:#475467;font-size:12px;line-height:1.5}.recovery .tag{display:inline-block;margin-bottom:6px;background:#eef7f0;color:#2f6d42;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:900;letter-spacing:.04em}.premium{border:0;background:var(--ink);color:#fff;border-radius:10px;padding:11px 13px;font-weight:900;cursor:pointer;white-space:nowrap}.premium:disabled{opacity:.55;cursor:wait}
+    .decision{margin-top:16px;border:1px solid #e1e7ee;background:#fbfcfe;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}.decision[hidden]{display:none}.decision strong{display:block;font-size:14px}.decision span{display:block;margin-top:4px;font-size:11px;color:#667085}.hold{border:0;background:#0f766e;color:#fff;border-radius:10px;padding:10px 13px;font-weight:900;cursor:pointer;white-space:nowrap}
+    .intent{margin-top:14px;border-top:1px solid #edf1f5;padding-top:13px;color:#667085;font-size:11px}.intent b{color:#344054}.toast{position:fixed;right:20px;bottom:20px;max-width:320px;background:#172033;color:#fff;border-radius:11px;padding:11px 14px;font-size:12px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}.toast.on{opacity:1;transform:none}
+    @media(max-width:760px){.grid{grid-template-columns:repeat(4,1fr)}.recovery{grid-template-columns:1fr}.premium{width:100%}}
+    @media(max-width:520px){.grid{grid-template-columns:repeat(3,1fr)}.body{padding:18px}.head{padding:20px}.head h1{font-size:24px}.topline{align-items:flex-start}.activity{font-size:10px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="topline">
+    <div class="brand"><strong>Demo Dental Hospital</strong><span>Behavior-responsive appointment availability</span></div>
+    <div class="activity"><i class="pulse"></i><strong id="activeSessions">2</strong> booking sessions active</div>
+  </div>
+
+  <div class="card">
+    <div class="head">
+      <h1>Choose your appointment time</h1>
+      <p>Pick the time that suits you. If your preferred time is full, we’ll check additional same-time doctor capacity only when you ask for it.</p>
+      <span class="demo">DEMO BEHAVIOR ENGINE · simulated capacity for evaluation</span>
+    </div>
+    <div class="body">
+      <div id="dates" class="dates"></div>
+      <div class="meta"><strong id="dayTitle">Today</strong><span id="availability"></span></div>
+      <div class="legend">
+        <span class="legend-item"><i class="swatch free"></i>Absolutely free</span>
+        <span class="legend-item"><i class="swatch limited"></i>Limited capacity</span>
+        <span class="legend-item"><i class="swatch full"></i>Full</span>
+      </div>
+      <div id="slots" class="grid"></div>
+      <div class="protected-note">Convenience windows are capacity-protected in this demo: lunch 1–3 PM, tea break 4–5 PM and 5–9 PM evening appointments are never shown as fully unavailable.</div>
+
+      <div id="recovery" class="recovery" hidden>
+        <div>
+          <span class="tag">PREFERRED-TIME RECOVERY</span>
+          <h3 id="recoveryTitle">Checking the same time…</h3>
+          <p id="recoveryText"></p>
+        </div>
+        <button id="premiumBtn" class="premium" disabled>Checking…</button>
+      </div>
+
+      <div id="decision" class="decision" hidden>
+        <div><strong id="decisionTitle"></strong><span id="decisionText"></span></div>
+        <button id="holdBtn" class="hold">Hold this time</button>
+      </div>
+
+      <div class="intent"><b>Behavior logic:</b> full slots remain stable. Recovery is triggered by a full-slot click, repeated interest, or 30+ seconds of unresolved intent around a preferred full time.</div>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const times=['8:00 am','8:30 am','9:00 am','9:30 am','10:00 am','10:30 am','11:00 am','11:30 am','12:00 pm','12:30 pm','1:00 pm','1:30 pm','2:00 pm','2:30 pm','3:00 pm','3:30 pm','4:00 pm','4:30 pm','5:00 pm','5:30 pm','6:00 pm','6:30 pm','7:00 pm','7:30 pm','8:00 pm','8:30 pm','9:00 pm','9:30 pm'];
+const regularDoctors=['Dr. Ananya','Dr. Kiran','Dr. Meera'];
+const seniorDoctors=['Dr. Arjun Rao · Principal Dentist','Dr. Nisha Varma · Senior Consultant'];
+let day=0;
+let states={};
+let behavior={};
+let pageOpenedAt=Date.now();
+let lastInterestedFull=null;
+let decisionSlot=null;
+let recoveryTimer=null;
+let activeSessionCount=2;
+
+function minutesOf(t){const [clock,ampm]=t.split(' ');let [h,m]=clock.split(':').map(Number);if(ampm==='pm'&&h!==12)h+=12;if(ampm==='am'&&h===12)h=0;return h*60+m}
+function isProtected(t){const m=minutesOf(t);return (m>=13*60&&m<15*60)||(m>=16*60&&m<17*60)||(m>=17*60&&m<21*60)}
+function isEarlySchoolWindow(t){const m=minutesOf(t);return m>=8*60&&m<9.5*60}
+function seed(d,i){return (d*41+i*23+17)%100}
+function initDay(d){
+  if(states[d])return;
+  states[d]=times.map((t,i)=>{
+    const s=seed(d,i);
+    if(isProtected(t)||isEarlySchoolWindow(t)) return s<58?'free':'limited';
+    if(s<45)return 'free';
+    if(s<72)return 'limited';
+    return 'full';
+  });
+  // Keep the visible day psychologically active without creating a repetitive stripe pattern.
+  // About 25-30% of non-protected times become full; protected windows can only be free/limited.
+  const candidates=times.map((t,i)=>({t,i})).filter(x=>!isProtected(x.t)&&!isEarlySchoolWindow(x.t));
+  const targetFull=Math.max(2,Math.round(times.length*.27));
+  let fullCount=states[d].filter(x=>x==='full').length;
+  for(const c of candidates){
+    if(fullCount>=targetFull)break;
+    if(states[d][c.i]!=='full'&&seed(d+7,c.i)%2===0){states[d][c.i]='full';fullCount++}
+  }
+  // If seeded data overshoots, soften some full states back to limited.
+  for(const c of [...candidates].reverse()){
+    if(fullCount<=targetFull)break;
+    if(states[d][c.i]==='full'){states[d][c.i]='limited';fullCount--}
+  }
+}
 function labelDate(d){const x=new Date();x.setDate(x.getDate()+d);return d===0?'Today':d===1?'Tomorrow':x.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}
-function renderDates(){dates.innerHTML='';for(let d=0;d<10;d++){const b=document.createElement('button');b.className='date '+(d===day?'on':'');b.textContent=labelDate(d);b.onclick=()=>{day=d;initDay(day);render()};dates.appendChild(b)}}
-function render(){initDay(day);renderDates();dayTitle.textContent=labelDate(day);slots.innerHTML='';const open=states[day].filter(x=>x==='available'||x==='opened').length;availability.textContent=open+' times available';states[day].forEach((s,i)=>{const b=document.createElement('button');b.className='slot '+s;b.innerHTML=times[i]+(s==='booked'?'<small>Booked</small>':s==='held'?'<small>Held</small>':s==='opened'?'<small>Just opened</small>':'<small>Available</small>');b.onclick=()=>choose(i,s);slots.appendChild(b)})}
-function choose(i,s){interest[day+'-'+i]=(interest[day+'-'+i]||0)+1;if(s==='available'||s==='opened'){showToast(times[i]+' selected · ready to hold');return} recovery.hidden=false;recoveryTitle.textContent='Checking '+times[i]+' for you…';recoveryText.textContent='This displayed slot is unavailable. Checking additional doctor capacity at the same time.';premiumBtn.textContent='Checking…';premiumBtn.disabled=true;setTimeout(()=>{recoveryTitle.textContent='Same-time option found';recoveryText.textContent=principal+' has additional consultation capacity at '+times[i]+'.';premiumBtn.textContent='Hold '+times[i]+' with senior doctor';premiumBtn.disabled=false;premiumBtn.onclick=()=>showToast(times[i]+' held · continue to payment')},1200)}
-function showToast(t){toast.textContent=t;toast.classList.add('on');setTimeout(()=>toast.classList.remove('on'),2200)}
-setInterval(()=>{initDay(day);const candidates=states[day].map((s,i)=>({s,i})).filter(x=>x.s==='booked'||x.s==='held');if(candidates.length&&Math.random()<.65){const x=candidates[Math.floor(Math.random()*candidates.length)];states[day][x.i]='opened';render();setTimeout(()=>{if(states[day][x.i]==='opened')states[day][x.i]='available';render()},5000)}else{const opens=states[day].map((s,i)=>({s,i})).filter(x=>x.s==='available'&&!protectedTime(times[x.i]));if(opens.length){const x=opens[Math.floor(Math.random()*opens.length)];states[day][x.i]='held';render();setTimeout(()=>{if(states[day][x.i]==='held')states[day][x.i]=Math.random()<.45?'booked':'available';render()},4500)}}},3500);render();
-</script></body></html>
+function key(i){return `${day}:${i}`}
+function getBehavior(i){const k=key(i);if(!behavior[k])behavior[k]={clicks:0,hoverMs:0,hoverStart:0,lastAt:0,recovered:false};return behavior[k]}
+function renderDates(){dates.innerHTML='';for(let d=0;d<10;d++){const b=document.createElement('button');b.className='date '+(d===day?'on':'');b.textContent=labelDate(d);b.addEventListener('click',()=>{day=d;initDay(day);resetPanels();render()});dates.appendChild(b)}}
+function slotDetail(status){if(status==='free')return 'Available';if(status==='limited')return 'Some doctors filled';return 'All regular doctors full'}
+function render(){
+  initDay(day);renderDates();dayTitle.textContent=labelDate(day);slots.innerHTML='';
+  const free=states[day].filter(x=>x==='free').length;
+  const limited=states[day].filter(x=>x==='limited').length;
+  availability.textContent=`${free} free · ${limited} limited · ${states[day].filter(x=>x==='full').length} full`;
+  states[day].forEach((status,i)=>{
+    const b=document.createElement('button');
+    b.className='slot '+status;
+    b.innerHTML=`<span class="tiny"></span>${times[i]}<small>${slotDetail(status)}</small>`;
+    b.addEventListener('mouseenter',()=>{const x=getBehavior(i);x.hoverStart=Date.now();if(status==='full')lastInterestedFull={day,i,time:times[i]}});
+    b.addEventListener('mouseleave',()=>{const x=getBehavior(i);if(x.hoverStart){x.hoverMs+=Date.now()-x.hoverStart;x.hoverStart=0}if(status==='full'&&x.hoverMs>1800)lastInterestedFull={day,i,time:times[i]}});
+    b.addEventListener('focus',()=>{if(status==='full')lastInterestedFull={day,i,time:times[i]}});
+    b.addEventListener('click',()=>choose(i,status));
+    slots.appendChild(b);
+  });
+}
+function choose(i,status){
+  const b=getBehavior(i);b.clicks++;b.lastAt=Date.now();
+  decisionSlot={day,i,time:times[i],status};
+  if(status==='full'){
+    lastInterestedFull={day,i,time:times[i]};
+    triggerRecovery(i,'click');
+    return;
+  }
+  recovery.hidden=true;
+  decision.hidden=false;
+  decisionTitle.textContent=`${times[i]} works`;
+  decisionText.textContent=status==='limited'?`Regular doctor capacity is limited at this time. We can hold the next available doctor for you.`:`This time has comfortable capacity. We can hold it now.`;
+  holdBtn.textContent=`Hold ${times[i]}`;
+}
+function triggerRecovery(i,reason){
+  const b=getBehavior(i);if(b.recovered)return;
+  clearTimeout(recoveryTimer);
+  recovery.hidden=false;decision.hidden=true;
+  recoveryTitle.textContent=`Checking ${times[i]} for you…`;
+  recoveryText.textContent=reason==='dwell'?`You seem to prefer this time. Regular capacity is full, so we’re checking reserve same-time capacity.`:`Regular doctor capacity at ${times[i]} is full. Checking reserve same-time capacity now.`;
+  premiumBtn.disabled=true;premiumBtn.textContent='Checking…';
+  recoveryTimer=setTimeout(()=>{
+    const senior=seniorDoctors[(day+i)%seniorDoctors.length];
+    b.recovered=true;
+    recoveryTitle.textContent='Same-time priority option found';
+    recoveryText.textContent=`${senior} has reserve consultation capacity at ${times[i]}. This option was not shown in the regular slot inventory.`;
+    premiumBtn.disabled=false;premiumBtn.textContent=`Hold ${times[i]}`;
+    premiumBtn.onclick=()=>{decisionSlot={day,i,time:times[i],status:'priority'};showToast(`${times[i]} priority capacity held · continue to payment`);premiumBtn.textContent='Held for you';premiumBtn.disabled=true};
+  },900);
+}
+function resetPanels(){recovery.hidden=true;decision.hidden=true;clearTimeout(recoveryTimer)}
+function showToast(t){toast.textContent=t;toast.classList.add('on');setTimeout(()=>toast.classList.remove('on'),2400)}
+holdBtn.addEventListener('click',()=>{if(!decisionSlot)return;showToast(`${decisionSlot.time} held · continue to payment`);holdBtn.textContent='Held for you';holdBtn.disabled=true});
+
+// 30-second unresolved-intent rule. It never changes inventory by itself.
+// It only acts if the visitor has already signalled interest in a full time via hover/focus/click.
+setInterval(()=>{
+  if(Date.now()-pageOpenedAt<30000||!lastInterestedFull)return;
+  if(lastInterestedFull.day!==day)return;
+  const b=getBehavior(lastInterestedFull.i);
+  const activeHover=b.hoverStart?Date.now()-b.hoverStart:0;
+  if(!b.recovered&&(b.clicks>0||b.hoverMs+activeHover>=1800))triggerRecovery(lastInterestedFull.i,'dwell');
+},1000);
+
+// Standalone demo only: show 2 or 3 simulated concurrent sessions, never 0/1.
+// Production should replace this with real concurrent-session telemetry.
+setInterval(()=>{activeSessionCount=activeSessionCount===2?3:2;activeSessions.textContent=String(activeSessionCount)},11000);
+
+render();
+</script>
+</body>
+</html>
