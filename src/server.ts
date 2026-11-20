@@ -5,6 +5,7 @@ import type { ClientConfig } from "./domain.js";
 import { ConversionOrchestrator } from "./conversion-orchestrator.js";
 import { RuntimeStore } from "./runtime-store.js";
 import { GovernedVoiceAgent } from "./voice-agent.js";
+import { dispatchPendingTelemetry, handleWorkforceRequest } from "./rungrow-workforce.js";
 import {
   GoogleCalendarSlotProvider,
   RazorpayPaymentProvider,
@@ -104,7 +105,27 @@ const isAdmin = (req: IncomingMessage) => req.headers["x-admin-key"] === adminKe
 
 const server = createServer(async (req, res) => {
   try {
+
     const requestUrl = new URL(req.url ?? "/", publicBaseUrl);
+
+    if (requestUrl.pathname.startsWith("/api/v1/workforce/")) {
+      const rawBody = Buffer.from(await readBody(req));
+      const result = await handleWorkforceRequest({
+        method: req.method ?? "GET",
+        path: requestUrl.pathname,
+        headers: req.headers,
+        rawBody,
+      });
+      return sendJson(res, result.status, result.body);
+    }
+
+    if (requestUrl.pathname === "/api/cron/rungrow-telemetry" && req.method === "GET") {
+      const cronSecret = process.env.CRON_SECRET;
+      if (!cronSecret) return sendJson(res, 503, { error: "Telemetry dispatch is not configured" });
+      if (req.headers.authorization !== "Bearer " + cronSecret) return sendJson(res, 401, { error: "Unauthorized" });
+      try { return sendJson(res, 200, await dispatchPendingTelemetry()); }
+      catch (error) { return sendJson(res, 503, { error: error instanceof Error ? error.message : "Telemetry dispatch unavailable" }); }
+    }
 
     if (req.method === "GET" && requestUrl.pathname === "/health") {
       return sendJson(res, 200, { ok: true, version: "0.3.1-validation", tenantId, telephony: "twilio", agent: "sarvam" });
