@@ -6,6 +6,7 @@ const READ_SCOPE = RUNGROW_PRODUCT_ID + ":read";
 const WRITE_SCOPE = RUNGROW_PRODUCT_ID + ":write";
 const HANDOFF_PATH = "/api/v1/workforce/prospects/handoff";
 const SUMMARY_PATH = "/api/v1/workforce/summary";
+const PROSPECTS_PATH = "/api/v1/workforce/prospects";
 let pool: Pool | undefined;
 
 function database(): Pool {
@@ -104,6 +105,18 @@ export async function handleWorkforceRequest(input: {
         return { product_id: RUNGROW_PRODUCT_ID, api_version: "v1", external_tenant_id: auth.externalTenantId,
           metrics: { total_prospects: total.rows[0].count, qualified_prospects: qualified.rows[0].count,
             converted_prospects: converted.rows[0].count }, recent_prospects: recent.rows };
+      });
+      return { status: 200, body: result };
+    }
+    if (input.method === "GET" && input.path === PROSPECTS_PATH) {
+      const auth = verifyWorkforceRequest(input.headers, input.rawBody, READ_SCOPE);
+      const result = await inTenant(auth.externalTenantId, async client => {
+        const rows = await client.query(
+          "SELECT id,name,status,source_url,correlation_id,approval_id,created_at,updated_at FROM rungrow_prospects WHERE external_tenant_id=$1 ORDER BY created_at DESC LIMIT 100",
+          [auth.externalTenantId]
+        );
+        return { product_id: RUNGROW_PRODUCT_ID, api_version: "v1",
+          external_tenant_id: auth.externalTenantId, prospects: rows.rows };
       });
       return { status: 200, body: result };
     }
