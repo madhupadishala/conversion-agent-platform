@@ -76,6 +76,13 @@ test("signed tenant summary is database-derived and isolated", async () => {
   assert.equal(body.metrics.total_prospects, 1);
   assert.equal(body.recent_prospects[0]?.name, "Tenant A Prospect");
   assert.equal(JSON.stringify(summary.body).includes("Tenant B Private Prospect"), false);
+
+  const prospectList = await handleWorkforceRequest(request("GET", "/api/v1/workforce/prospects", tenantA, "read"));
+  assert.equal(prospectList.status, 200);
+  const listBody = prospectList.body as { prospects: Array<{ name: string }> };
+  assert.equal(listBody.prospects.length, 1);
+  assert.equal(listBody.prospects[0]?.name, "Tenant A Prospect");
+  assert.equal(JSON.stringify(prospectList.body).includes("Tenant B Private Prospect"), false);
 });
 
 test("durable handoff idempotency replays identical payload and returns 409 on payload mismatch", async () => {
