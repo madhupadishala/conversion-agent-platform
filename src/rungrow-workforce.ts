@@ -194,7 +194,7 @@ export async function dispatchPendingTelemetry(batchSize = 25): Promise<{ delive
   for (const item of tenants.rows as Array<{ external_tenant_id: string }>) {
     const tenantId = item.external_tenant_id;
     const pending = await inTenant(tenantId, client => client.query(
-      "SELECT id,event_type,payload,recognised_revenue_inr::text FROM rungrow_telemetry_outbox WHERE state='pending' AND next_attempt_at<=now() ORDER BY created_at LIMIT $2",
+      "SELECT id,event_type,payload,recognised_revenue_inr::text FROM rungrow_telemetry_outbox WHERE external_tenant_id=$1 AND state='pending' AND next_attempt_at<=now() ORDER BY created_at LIMIT $2",
       [tenantId, Math.max(1, Math.min(100, batchSize))]
     ));
     for (const event of pending.rows as Array<{id:string;event_type:string;payload:Record<string,unknown>;recognised_revenue_inr:string}>) {
