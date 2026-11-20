@@ -1,5 +1,10 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+CREATE TABLE IF NOT EXISTS rungrow_external_tenants (
+  external_tenant_id varchar(160) PRIMARY KEY,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS rungrow_prospects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   external_tenant_id varchar(160) NOT NULL,
