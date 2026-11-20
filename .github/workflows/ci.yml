@@ -2,19 +2,37 @@ name: ci
 
 on:
   push:
-    branches: [main, build/v0-core]
+    branches: [main, build/v0-core, feat/rungrow-workforce-adapter-v1]
   pull_request:
     branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rungrow
+          POSTGRES_PASSWORD: rungrow
+          POSTGRES_DB: rungrow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rungrow -d rungrow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://rungrow:rungrow@localhost:5432/rungrow
+      RUNGROW_WORKFORCE_HMAC_SECRET: ci-rungrow-workforce-secret-with-at-least-32-characters
+      RUNGROW_WORKFORCE_TENANT_ID: rungrow-internal-workforce
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - run: npm install --no-audit --no-fund
+      - name: Apply tenant-scoped adapter schema
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/001_rungrow_workforce_v1.sql
       - run: npm test
-
-# CI verification branch: confirms install + build + tests execute on pull requests.
