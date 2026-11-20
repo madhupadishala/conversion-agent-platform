@@ -200,7 +200,7 @@ export async function dispatchPendingTelemetry(batchSize = 25): Promise<{ delive
     for (const event of pending.rows as Array<{id:string;event_type:string;payload:Record<string,unknown>;recognised_revenue_inr:string}>) {
       const body = JSON.stringify({ product_id:RUNGROW_PRODUCT_ID, tenant_id:tenantId,
         event:{ event_id:event.id,event_type:event.event_type,
-          recognised_revenue_inr:event.event_type.startsWith("invoice.recogn")?Number(event.recognised_revenue_inr):0,
+          recognised_revenue_inr:["invoice.recognised","invoice.recognized"].includes(event.event_type)?Number(event.recognised_revenue_inr):0,
           metadata:event.payload } });
       const timestamp = String(Math.floor(Date.now()/1000));
       const scopes = [WRITE_SCOPE];
