@@ -89,9 +89,18 @@ test("durable handoff idempotency replays identical payload and returns 409 on p
   assert.equal(replay.status, 200);
   assert.equal((replay.body as { replayed: boolean }).replayed, true);
   assert.equal(conflict.status, 409);
-  const count = await cleanupPool.query("SELECT count(*)::int AS count FROM rungrow_prospects WHERE external_tenant_id=$1 AND email=$2",
-    [tenantA, payload.email]);
-  assert.equal(count.rows[0].count, 1);
+  const countClient = await cleanupPool.connect();
+  try {
+    await countClient.query("BEGIN");
+    await countClient.query("SELECT set_config('app.external_tenant_id',$1,true)", [tenantA]);
+    const count = await countClient.query("SELECT count(*)::int AS count FROM rungrow_prospects WHERE external_tenant_id=$1 AND email=$2",
+      [tenantA, payload.email]);
+    assert.equal(count.rows[0].count, 1);
+    await countClient.query("COMMIT");
+  } catch (error) {
+    await countClient.query("ROLLBACK");
+    throw error;
+  } finally { countClient.release(); }
 });
 
 test("lifecycle events carry zero revenue; only recognised invoice events carry recognised revenue", async () => {
